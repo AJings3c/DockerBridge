@@ -1,0 +1,58 @@
+services:
+  dockerbridge:
+    image: kilomac/dockerbridge:latest
+    restart: unless-stopped
+    # Host terminal access is equivalent to administrative shell access.
+    # The default console runs inside the DockerBridge container; uncomment
+    # both settings below only when direct host terminal access is required.
+    # pid: host
+    # privileged: true
+    ports:
+      # Host Port : Container Port
+      - 8612:8612
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+        
+      # If you want to use private registries, you need to share the auth file with Dockge:
+      # - /root/.docker/:/root/.docker
+
+      # Optional: enable Docker daemon config editing from DockerBridge.
+      # Review this carefully before enabling it on a production host.
+      # - /etc/docker/daemon.json:/host/etc/docker/daemon.json
+
+      # Stacks Directory
+      # ⚠️ READ IT CAREFULLY. If you did it wrong, your data could end up writing into a WRONG PATH.
+      # ⚠️ 1. FULL path only. No relative path (MUST)
+      # ⚠️ 2. Left Stacks Path === Right Stacks Path (MUST)
+      - /opt/stacks:/opt/stacks
+
+      # Optional: additional read-only Compose repository roots.
+      # Keep the host and container paths identical so running project paths
+      # returned by Docker Compose remain usable.
+      # - /srv/compose:/srv/compose:ro
+    environment:
+      # Tell DockerBridge where is your stacks directory
+      - DOCKGE_STACKS_DIR=/opt/stacks
+      # Enable the authenticated admin terminal in the DockerBridge runtime.
+      # Host access still requires the pid/privileged settings above.
+      - DOCKERBRIDGE_ENABLE_CONSOLE=true
+      - DOCKERBRIDGE_CONSOLE_TARGET=runtime
+      # - DOCKERBRIDGE_CONSOLE_HOST_PID=1
+      # Close inactive web terminal sessions and cap concurrent host shells.
+      # - DOCKERBRIDGE_CONSOLE_IDLE_TIMEOUT_SECONDS=900
+      # - DOCKERBRIDGE_CONSOLE_MAX_SESSIONS=3
+      # Optional but recommended for controllers that store remote Agent
+      # credentials. Keep this value stable and outside source control.
+      # - DOCKERBRIDGE_AGENT_CREDENTIAL_KEY=replace-with-a-long-random-secret
+      # Optional: force a shell path. Auto detection tries bash, zsh, ash, then sh.
+      # - DOCKERBRIDGE_CONSOLE_SHELL=/bin/bash
+      # Optional: scan every YAML file under these roots and index files whose
+      # top-level `services` map is not empty.
+      # - DOCKERBRIDGE_COMPOSE_SCAN_DIRS=/opt/stacks,/srv/compose
+      # - DOCKERBRIDGE_COMPOSE_SCAN_DEPTH=12
+      # - DOCKERBRIDGE_COMPOSE_SCAN_LIMIT=10000
+      # Optional: use the mounted host Docker daemon config path above.
+      # - DOCKERBRIDGE_DAEMON_JSON=/host/etc/docker/daemon.json
+      # Optional: command used by the Docker restart button.
+      # - DOCKERBRIDGE_DOCKER_RESTART_CMD=systemctl restart docker

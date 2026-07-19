@@ -1,0 +1,622 @@
+.securityNotice,
+.feedback {
+    margin-top: 14px;
+}
+
+.securityNotice code {
+    color: inherit;
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.workspace {
+    display: grid;
+    grid-template-columns: minmax(520px, 0.92fr) minmax(500px, 1.08fr);
+    gap: 16px;
+    margin-top: 18px;
+    align-items: start;
+}
+
+.listPanel,
+.detailPanel {
+    min-width: 0;
+}
+
+.detailPanel {
+    position: sticky;
+    top: calc(var(--header-height) + 18px);
+    max-height: calc(100dvh - var(--header-height) - 36px);
+    overflow-y: auto;
+}
+
+.panelHeading,
+.detailHeader,
+.sectionHeading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.panelHeading {
+    min-height: 57px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--material-sheet);
+}
+
+.panelHeading h3,
+.sectionHeading h3,
+.detailHeader h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.panelHeading h3,
+.sectionHeading h3 {
+    font-size: 13px;
+}
+
+.panelHeading p,
+.sectionHeading p,
+.detailHeader p {
+    margin: 2px 0 0;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.panelHeading > span {
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.agentTable {
+    min-width: 720px;
+}
+
+.agentTable td {
+    height: 59px;
+}
+
+.selectedRow {
+    background: color-mix(in oklch, var(--accent), transparent 94%);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.selectedRow:hover {
+    background: color-mix(in oklch, var(--accent), transparent 91%) !important;
+}
+
+.agentIdentity {
+    display: flex;
+    max-width: 250px;
+    min-width: 190px;
+    flex-direction: column;
+    padding: 0;
+    border: 0;
+    outline-offset: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.agentIdentity strong,
+.agentIdentity small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.agentIdentity strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.agentIdentity small,
+.timeCell {
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.agentIdentity small {
+    margin-top: 2px;
+    font-family: var(--font-mono);
+}
+
+.detailHeader {
+    padding: 15px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface-raised);
+}
+
+.detailHeader h2 {
+    margin-top: 7px;
+    font-size: 19px;
+    letter-spacing: 0;
+}
+
+.detailHeader p {
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+}
+
+.statusLine,
+.detailActions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.detailBody {
+    display: flex;
+    flex-direction: column;
+}
+
+.detailSection {
+    padding: 17px 16px 18px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.detailSection:last-child {
+    border-bottom: 0;
+}
+
+.inlineForm {
+    margin-top: 14px;
+}
+
+.inlineForm > label,
+.twoColumns label,
+.formGrid label,
+.confirmField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--ink-secondary);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.inlineForm input,
+.formGrid input,
+.confirmField input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--bg-subtle);
+    color: var(--ink);
+    transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.inlineForm input:focus,
+.formGrid input:focus,
+.confirmField input:focus {
+    border-color: var(--focus);
+    background: var(--bg-surface-raised);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--focus), transparent 86%);
+}
+
+.toggleField {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start;
+    gap: 10px !important;
+    margin-top: 13px;
+    padding: 11px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-subtle);
+}
+
+.toggleField input {
+    width: 16px;
+    min-height: 16px;
+    margin-top: 3px;
+    padding: 0;
+}
+
+.toggleField > span {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.toggleField strong {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.toggleField small,
+.formGrid small {
+    color: var(--ink-muted);
+    font-size: 10px;
+    font-weight: 400;
+}
+
+.credentialFacts,
+.factGrid,
+.pathFacts,
+.removalFacts {
+    display: grid;
+    margin: 14px 0 0;
+}
+
+.credentialFacts,
+.factGrid,
+.pathFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.credentialFacts > div,
+.factGrid > div,
+.pathFacts > div {
+    min-width: 0;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.credentialFacts > div:nth-child(odd),
+.factGrid > div:nth-child(odd),
+.pathFacts > div:nth-child(odd) {
+    border-right: 1px solid var(--border-subtle);
+}
+
+.credentialFacts > div:nth-last-child(-n + 2),
+.factGrid > div:nth-last-child(-n + 2),
+.pathFacts > div:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+.credentialFacts dt,
+.factGrid dt,
+.pathFacts dt,
+.removalFacts dt {
+    color: var(--ink-muted);
+    font-size: 10px;
+}
+
+.credentialFacts dd,
+.factGrid dd,
+.pathFacts dd,
+.removalFacts dd {
+    margin: 3px 0 0;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.inlineNotice {
+    margin-top: 12px;
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.twoColumns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.dockerSummary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    border-left: 1px solid var(--border-subtle);
+}
+
+.dockerSummary > div {
+    min-width: 0;
+    padding: 10px;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dockerSummary span,
+.capabilities > span {
+    display: block;
+    color: var(--ink-muted);
+    font-size: 10px;
+}
+
+.dockerSummary strong {
+    display: block;
+    margin-top: 3px;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.capabilities {
+    margin-top: 13px;
+}
+
+.capabilities > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 7px;
+}
+
+.capabilities code {
+    padding: 4px 7px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+    color: var(--ink-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.capabilities p {
+    margin: 6px 0 0;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.dialog {
+    width: min(620px, calc(100vw - 28px));
+    max-height: min(860px, calc(100dvh - 28px));
+    padding: 0;
+    overflow: auto;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    outline: none;
+    background: var(--bg-surface-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-popover);
+    -webkit-backdrop-filter: blur(28px) saturate(165%);
+    backdrop-filter: blur(28px) saturate(165%);
+    animation: agent-dialog-in var(--motion-standard) var(--ease-out-expo) both;
+}
+
+.dialog::backdrop {
+    background: var(--scrim);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.dialogContent {
+    margin: 0;
+}
+
+.dialogHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dialogHeader h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.dialogHeader p {
+    margin: 3px 0 0;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.dialogHeader button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+}
+
+.dialogHeader button:hover:not(:disabled) {
+    background: var(--bg-subtle);
+    color: var(--ink);
+}
+
+.dialogHeader button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+@keyframes agent-dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 17px 18px;
+    border: 0;
+}
+
+.formGrid label:nth-child(2) {
+    grid-column: 1 / -1;
+}
+
+.testResult {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 18px 16px;
+    padding: 11px 12px;
+    border: 1px solid color-mix(in oklch, var(--success), transparent 50%);
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--success), transparent 92%);
+    color: color-mix(in oklch, var(--success), var(--ink) 12%);
+}
+
+.testResult > span {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    background: color-mix(in oklch, var(--success), transparent 82%);
+}
+
+.testResult strong {
+    font-size: 12px;
+}
+
+.testResult p {
+    margin: 2px 0 0;
+    font-size: 11px;
+}
+
+.dialogActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 13px 18px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+}
+
+.removalFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
+    padding: 15px 18px 0;
+}
+
+.removalImpact,
+.warningList {
+    margin: 14px 18px 0;
+    padding: 11px 12px;
+    border-radius: var(--radius-md);
+}
+
+.removalImpact {
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+}
+
+.warningList {
+    border: 1px solid color-mix(in oklch, var(--warning), transparent 48%);
+    background: color-mix(in oklch, var(--warning), transparent 92%);
+    color: color-mix(in oklch, var(--warning), var(--ink) 12%);
+}
+
+.removalImpact strong,
+.warningList strong {
+    font-size: 12px;
+}
+
+.removalImpact p,
+.warningList p {
+    margin: 4px 0 0;
+    font-size: 11px;
+}
+
+.confirmField {
+    margin: 16px 18px;
+}
+
+.confirmField code,
+.mono {
+    font-family: var(--font-mono);
+}
+
+@media (max-width: 1360px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .detailPanel {
+        position: static;
+        max-height: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .workspace {
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .detailHeader,
+    .sectionHeading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .detailActions,
+    .detailActions > button {
+        width: 100%;
+    }
+
+    .detailActions > button {
+        flex: 1;
+    }
+
+    .detailSection,
+    .detailHeader {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .credentialFacts,
+    .factGrid,
+    .pathFacts,
+    .twoColumns,
+    .formGrid,
+    .removalFacts {
+        grid-template-columns: 1fr;
+    }
+
+    .credentialFacts > div,
+    .factGrid > div,
+    .pathFacts > div {
+        border-right: 0 !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+    }
+
+    .credentialFacts > div:last-child,
+    .factGrid > div:last-child,
+    .pathFacts > div:last-child {
+        border-bottom: 0 !important;
+    }
+
+    .dockerSummary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .formGrid label:nth-child(2) {
+        grid-column: auto;
+    }
+
+    .dialogActions {
+        flex-wrap: wrap;
+    }
+
+    .dialogActions > button {
+        min-width: calc(50% - 4px);
+        flex: 1;
+    }
+}

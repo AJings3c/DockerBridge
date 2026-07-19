@@ -1,0 +1,19 @@
+.track {
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--bg-subtle);
+}
+
+.fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--meter-color, var(--accent));
+    transform: scaleX(var(--meter-value, 0));
+    transform-origin: left center;
+    transition: transform var(--motion-slow) var(--ease-out-expo), background var(--motion-fast) var(--ease-out);
+}
+
+.warning { --meter-color: var(--warning); }
+.danger { --meter-color: var(--danger); }

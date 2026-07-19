@@ -1,0 +1,30 @@
+.badge {
+    display: inline-flex;
+    min-height: 25px;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 9px;
+    border: 1px solid color-mix(in srgb, var(--tone), transparent 58%);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--tone), transparent 90%);
+    color: color-mix(in srgb, var(--tone), var(--ink) 12%);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out);
+}
+
+.badge::before {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentColor;
+    content: "";
+}
+
+.success { --tone: var(--success); }
+.danger { --tone: var(--danger); }
+.warning { --tone: var(--warning); }
+.info { --tone: var(--info); }
+.neutral { --tone: var(--ink-muted); }

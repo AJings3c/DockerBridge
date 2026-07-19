@@ -1,0 +1,238 @@
+.imageWorkbench {
+    margin-bottom: 14px;
+}
+
+.imageTools {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+}
+
+.pullForm,
+.pruneControls,
+.tagEditor {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
+    padding: 14px 16px;
+}
+
+.pullForm {
+    border-right: 1px solid var(--border-subtle);
+}
+
+.pullForm > div,
+.pruneControls > div,
+.tagEditor > div {
+    display: flex;
+    min-width: 150px;
+    flex-direction: column;
+    margin-right: auto;
+}
+
+.pullForm strong,
+.pruneControls strong,
+.tagEditor strong,
+.progress strong,
+.prunePreview strong {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pullForm span,
+.pruneControls span,
+.tagEditor span,
+.progress span,
+.prunePreview span,
+.prunePreview p {
+    margin-top: 2px;
+    color: var(--ink-muted);
+    font-size: 10px;
+}
+
+.pullForm input,
+.pruneControls select,
+.tagEditor input {
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--bg-subtle);
+    color: var(--ink);
+    font-size: 12px;
+    transition: border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.pullForm input {
+    width: min(390px, 46%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.pullForm input:focus,
+.pruneControls select:focus,
+.tagEditor input:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--focus), transparent 86%);
+}
+
+.progress,
+.tagEditor,
+.prunePreview {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.progress header,
+.prunePreview header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 16px;
+}
+
+.progress pre {
+    max-height: 240px;
+    margin: 0;
+    padding: 12px 16px;
+    overflow: auto;
+    background: #080d14;
+    color: #dce8f2;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.tagEditor input {
+    width: min(420px, 48%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.prunePreview header > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.prunePreview ul {
+    max-height: 260px;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    border-top: 1px solid var(--border-subtle);
+    list-style: none;
+}
+
+.prunePreview li {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+}
+
+.prunePreview li code,
+.prunePreview li small {
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.prunePreview li span {
+    overflow: hidden;
+    margin: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prunePreview p {
+    margin: 0;
+    padding: 9px 16px 12px;
+}
+
+.usageList {
+    display: flex;
+    max-width: 260px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.usageList button {
+    max-width: 150px;
+    padding: 2px 5px;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: color-mix(in oklch, var(--accent), transparent 90%);
+    color: var(--accent-strong);
+    cursor: pointer;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.usageList button:hover {
+    background: color-mix(in oklch, var(--accent), transparent 84%);
+}
+
+.usageList button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.usageList span {
+    color: var(--ink-muted);
+    font-size: 10px;
+}
+
+@media (max-width: 1060px) {
+    .imageTools {
+        grid-template-columns: 1fr;
+    }
+
+    .pullForm {
+        border-right: 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+}
+
+@media (max-width: 720px) {
+    .pullForm,
+    .pruneControls,
+    .tagEditor,
+    .prunePreview header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pullForm input,
+    .tagEditor input {
+        width: 100%;
+    }
+
+    .pullForm > button,
+    .pruneControls > button,
+    .tagEditor > button,
+    .prunePreview header > button {
+        width: 100%;
+    }
+
+    .prunePreview li {
+        grid-template-columns: 92px minmax(0, 1fr);
+    }
+
+    .prunePreview li small {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pullForm input,
+    .pruneControls select,
+    .tagEditor input {
+        transition: none;
+    }
+}

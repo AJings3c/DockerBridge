@@ -1,0 +1,116 @@
+.panel {
+    margin-top: 20px;
+}
+
+.feedback {
+    margin: 14px 16px 0;
+}
+
+.createForm,
+.passwordForm {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+}
+
+.createForm label {
+    display: flex;
+    min-width: 150px;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.createForm label:first-child {
+    max-width: 240px;
+}
+
+.createForm label:nth-child(3) {
+    max-width: 170px;
+}
+
+.createForm span,
+.passwordForm span {
+    color: var(--ink-muted);
+    font-size: 10px;
+}
+
+.createForm input,
+.createForm select,
+.passwordForm input,
+.userTable select {
+    min-height: 38px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--bg-surface);
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.createForm input:focus,
+.createForm select:focus,
+.passwordForm input:focus,
+.userTable select:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--focus), transparent 86%);
+}
+
+.userTable select {
+    min-height: 34px;
+}
+
+.activeToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ink-secondary);
+    font-size: 11px;
+}
+
+.passwordForm {
+    align-items: center;
+    border-bottom: 0;
+}
+
+.passwordForm > div {
+    display: flex;
+    min-width: 220px;
+    flex-direction: column;
+    margin-right: auto;
+}
+
+.passwordForm strong {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.passwordForm input {
+    width: min(320px, 36vw);
+}
+
+@media (max-width: 860px) {
+    .createForm,
+    .passwordForm {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .createForm label,
+    .createForm label:first-child,
+    .createForm label:nth-child(3),
+    .passwordForm input {
+        width: 100%;
+        max-width: none;
+    }
+
+    .createForm > button,
+    .passwordForm > button {
+        width: 100%;
+    }
+}

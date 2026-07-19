@@ -1,0 +1,240 @@
+.page {
+    display: grid;
+    min-height: 100svh;
+    grid-template-rows: auto 1fr auto;
+    padding: max(22px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+    background: var(--bg-canvas);
+}
+
+.topBar {
+    display: flex;
+    width: min(100%, 1040px);
+    justify-self: center;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.brandMark {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--accent), white 22%);
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent), transparent 76%), inset 0 1px 0 rgb(255 255 255 / 0.32);
+}
+
+.brandMark img {
+    width: 26px;
+    height: 26px;
+    filter: brightness(0) invert(1);
+}
+
+.brand > span:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand strong {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.brand small {
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.authPanel {
+    width: min(100%, 420px);
+    align-self: center;
+    justify-self: center;
+    padding: 28px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--material-sheet);
+    box-shadow: var(--shadow-popover);
+    -webkit-backdrop-filter: blur(36px) saturate(180%);
+    backdrop-filter: blur(36px) saturate(180%);
+    animation: auth-materialize var(--motion-slow) var(--ease-out-expo) both;
+}
+
+.copy {
+    margin-bottom: 24px;
+}
+
+.eyebrow {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.copy h1 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 28px;
+    font-weight: 680;
+    letter-spacing: 0;
+    line-height: 1.15;
+}
+
+.copy p {
+    margin: 8px 0 0;
+    color: var(--ink-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.authPanel form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.authPanel form > label:not(.remember) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--ink-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.authPanel input:not([type="checkbox"]) {
+    width: 100%;
+    min-height: 46px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    outline: 0;
+    background: var(--material-control);
+    color: var(--ink);
+    box-shadow: var(--shadow-control);
+    transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.authPanel input:not([type="checkbox"]):hover {
+    border-color: var(--border-strong);
+}
+
+.authPanel input:focus {
+    border-color: var(--focus);
+    background: var(--bg-surface-raised);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus), transparent 84%), var(--shadow-control);
+}
+
+.authPanel input[aria-invalid="true"] {
+    border-color: color-mix(in oklch, var(--danger), transparent 25%);
+}
+
+.remember {
+    display: flex;
+    min-height: 30px;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink-secondary);
+    font-size: 12px;
+}
+
+.error {
+    padding: 10px 11px;
+    border: 1px solid color-mix(in oklch, var(--danger), transparent 52%);
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--danger), transparent 93%);
+    color: color-mix(in oklch, var(--danger), var(--ink) 10%);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.submit {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 2px;
+}
+
+.connection {
+    display: flex;
+    min-height: 36px;
+    align-self: end;
+    justify-self: center;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.online,
+.offline {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success), transparent 88%);
+}
+
+.offline {
+    background: var(--danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger), transparent 88%);
+}
+
+@keyframes auth-materialize {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.985);
+        backdrop-filter: blur(10px) saturate(120%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 560px) {
+    .page {
+        padding: max(18px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    .authPanel {
+        padding: 24px 20px;
+    }
+
+    .copy h1 {
+        font-size: 26px;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .authPanel {
+        background: var(--bg-surface-raised);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .authPanel {
+        animation: auth-fade var(--motion-standard) linear both;
+    }
+}
+
+@keyframes auth-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .authPanel {
+        background: var(--bg-surface-raised);
+    }
+}

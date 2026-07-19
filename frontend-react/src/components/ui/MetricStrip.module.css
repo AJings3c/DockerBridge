@@ -1,0 +1,31 @@
+.strip {
+    display: grid;
+    grid-template-columns: repeat(var(--metric-count, 4), minmax(120px, 1fr));
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.metric {
+    min-width: 0;
+    padding: 16px 18px 17px;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.metric:last-child { border-right: 0; }
+.metric span { display: block; color: var(--ink-muted); font-size: 11px; font-weight: 500; }
+.metric strong { display: block; margin-top: 5px; font-family: var(--font-mono); font-size: 24px; font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.danger { background: color-mix(in oklch, var(--danger), transparent 94%); }
+.danger strong { color: var(--danger); }
+.warning { background: color-mix(in oklch, var(--warning), transparent 95%); }
+.warning strong { color: var(--warning); }
+
+@media (max-width: 900px) {
+    .strip { grid-template-columns: repeat(2, 1fr); }
+    .metric:nth-child(2n) { border-right: 0; }
+    .metric:nth-child(-n + 2) { border-bottom: 1px solid var(--border-subtle); }
+}
+
+@media (max-width: 720px) {
+    .metric { padding: 13px 14px; }
+    .metric strong { font-size: 19px; }
+}

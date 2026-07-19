@@ -1,0 +1,33 @@
+.field {
+    display: flex;
+    width: min(100%, 360px);
+    min-height: 40px;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--material-control);
+    color: var(--ink-muted);
+    box-shadow: var(--shadow-control);
+    transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.field:focus-within {
+    border-color: var(--focus);
+    background: var(--bg-surface-raised);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus), transparent 84%), var(--shadow-control);
+}
+
+.field input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+}
+
+.field input::placeholder { color: var(--ink-muted); }
+
+@media (max-width: 720px) { .field { width: 100%; } }

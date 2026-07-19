@@ -1,0 +1,22 @@
+# Should update .dockerignore as well
+.env
+node_modules
+.idea
+data
+stacks
+tmp
+.tmp
+.vs
+artifacts
+geneva_*
+exploit_geneva_*
+*.map
+/private
+
+# Git only
+frontend-dist
+
+# Internal development documentation is kept locally. Only the public root
+# README is allowed in the published repository.
+*.md
+!/README.md

@@ -1,0 +1,28 @@
+.bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.segmented {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--bg-emphasis), transparent 28%);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 0 var(--highlight-edge);
+}
+
+.segmented > * {
+    box-shadow: none;
+}
+
+@media (max-width: 720px) {
+    .bar { align-items: stretch; flex-direction: column; }
+    .segmented { width: 100%; }
+    .segmented > * { flex: 1; }
+}

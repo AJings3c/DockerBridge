@@ -1,0 +1,29 @@
+# Should be identical to .gitignore
+.env
+node_modules
+.idea
+data
+stacks
+tmp
+.tmp
+.vs
+artifacts
+geneva_*
+exploit_geneva_*
+*.map
+*.md
+/private
+
+# Docker extra
+docker
+frontend
+frontend-react
+extra/test-react-ui.py
+/*.exit
+/*.log
+/*.png
+.editorconfig
+.eslintrc.cjs
+.git
+.gitignore
+README.md

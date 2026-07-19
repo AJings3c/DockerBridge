@@ -1,0 +1,232 @@
+.page {
+    width: min(100%, 1540px);
+    margin: 0 auto;
+}
+
+.tableScroller {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-gutter: stable;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table th {
+    height: 38px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--bg-subtle), var(--bg-surface) 18%);
+    color: var(--ink-muted);
+    font-size: 11px;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table td {
+    min-height: 52px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table tbody tr {
+    transition: background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.table tbody tr:hover {
+    background: color-mix(in srgb, var(--accent), transparent 96%);
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent), transparent 52%);
+}
+
+.staleRow {
+    background: color-mix(in oklch, var(--warning), transparent 96%);
+    color: var(--ink-secondary);
+}
+
+.staleRow:hover {
+    background: color-mix(in oklch, var(--warning), transparent 92%) !important;
+}
+
+.pageVersion {
+    margin-top: 24px;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.primaryCell {
+    display: flex;
+    min-width: 170px;
+    flex-direction: column;
+}
+
+.primaryCell strong {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+}
+
+.primaryCell small,
+.muted {
+    overflow: hidden;
+    color: var(--ink-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+}
+
+.mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.formPanel {
+    width: min(100%, 780px);
+    max-width: 780px;
+    margin-top: 0;
+}
+
+.settingsFields {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 18px;
+    border: 0;
+}
+
+.textField {
+    display: flex;
+    max-width: 520px;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--ink-secondary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.textField input {
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--material-control);
+    color: var(--ink);
+    transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.textField input:focus {
+    border-color: var(--focus);
+    background: var(--bg-surface-raised);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus), transparent 84%), var(--shadow-control);
+}
+
+.toggleField {
+    display: flex;
+    min-height: 44px;
+    max-width: 620px;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.toggleField input {
+    margin-top: 3px;
+}
+
+.toggleField span {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggleField strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.toggleField small {
+    margin-top: 2px;
+    color: var(--ink-muted);
+}
+
+.dangerField {
+    padding: 12px;
+    border: 1px solid color-mix(in oklch, var(--danger), transparent 62%);
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--danger), transparent 94%);
+}
+
+.dangerField small {
+    color: color-mix(in oklch, var(--danger), white 12%);
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+}
+
+.terminalPanel {
+    min-height: 540px;
+    background: #080d14;
+    box-shadow: var(--shadow-surface);
+}
+
+.terminalFrame {
+    min-height: 540px;
+    padding: 10px;
+}
+
+@media (max-width: 720px) {
+    .table th,
+    .table td {
+        padding-right: 11px;
+        padding-left: 11px;
+    }
+
+    .mobileOptional {
+        display: none;
+    }
+
+    .table th:last-child,
+    .table td:last-child {
+        text-align: right;
+    }
+
+    .rowActions {
+        min-width: 0;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .settingsFields,
+    .formActions {
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .formActions > * {
+        width: 100%;
+    }
+
+    .terminalPanel,
+    .terminalFrame {
+        min-height: 480px;
+    }
+}

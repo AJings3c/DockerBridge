@@ -1,0 +1,27 @@
+.notice {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    color: var(--ink-secondary);
+    font-size: 13px;
+    animation: notice-in var(--motion-standard) var(--ease-out-expo) both;
+}
+
+.error {
+    border-color: color-mix(in oklch, var(--danger), transparent 50%);
+    background: color-mix(in oklch, var(--danger), transparent 92%);
+    color: var(--danger);
+}
+
+.warning {
+    border-color: color-mix(in oklch, var(--warning), transparent 50%);
+    background: color-mix(in oklch, var(--warning), transparent 92%);
+    color: color-mix(in oklch, var(--warning), var(--ink) 12%);
+}
+
+@keyframes notice-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
