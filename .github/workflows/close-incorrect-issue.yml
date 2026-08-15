@@ -4,17 +4,33 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: close-incorrect-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   close-incorrect-issue:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [16]
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
-    - name: Close Incorrect Issue
-      run: node extra/close-incorrect-issue.js ${{ secrets.GITHUB_TOKEN }} ${{ github.event.issue.number }} ${{ github.event.issue.user.login }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.14.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Close Incorrect Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_USERNAME: ${{ github.event.issue.user.login }}
+        run: node extra/close-incorrect-issue.js
