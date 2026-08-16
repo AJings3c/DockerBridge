@@ -172,16 +172,17 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
           RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
           $PSNativeCommandUseErrorActionPreference = $false
-          gh release view $env:RELEASE_TAG *> $null
+          gh release view $env:RELEASE_TAG --repo $env:GH_REPO *> $null
           if ($LASTEXITCODE -ne 0) {
-              gh release create $env:RELEASE_TAG --verify-tag --title "DockerBridge $env:RELEASE_VERSION" --generate-notes
+              gh release create $env:RELEASE_TAG --repo $env:GH_REPO --verify-tag --title "DockerBridge $env:RELEASE_VERSION" --generate-notes
               if ($LASTEXITCODE -ne 0) { throw "Failed to create GitHub Release." }
           }
           Get-ChildItem artifacts -File | ForEach-Object {
-              gh release upload $env:RELEASE_TAG $_.FullName --clobber
+              gh release upload $env:RELEASE_TAG $_.FullName --repo $env:GH_REPO --clobber
               if ($LASTEXITCODE -ne 0) { throw "Failed to upload $($_.Name)." }
           }
