@@ -43,7 +43,11 @@ FROM base AS build
 WORKDIR /app
 COPY --chown=node:node  ./package.json ./package.json
 COPY --chown=node:node  ./package-lock.json ./package-lock.json
-RUN npm ci --omit=dev
+RUN npm ci
+COPY --chown=node:node ./frontend ./frontend
+COPY --chown=node:node ./frontend-react ./frontend-react
+RUN npm run build:frontend \
+    && npm prune --omit=dev
 
 ############################################
 # ⭐ Main Image
@@ -55,7 +59,13 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*
 COPY --chown=node:node --from=build_healthcheck /app/extra/healthcheck /app/extra/healthcheck
 COPY --from=build /app/node_modules /app/node_modules
-COPY --chown=node:node  . .
+COPY --chown=node:node --from=build /app/frontend-dist /app/frontend-dist
+COPY --chown=node:node ./backend ./backend
+COPY --chown=node:node ./common ./common
+COPY --chown=node:node ./extra ./extra
+COPY --chown=node:node ./package.json ./package.json
+COPY --chown=node:node ./package-lock.json ./package-lock.json
+COPY --chown=node:node ./LICENSE ./LICENSE
 RUN mkdir ./data
 
 

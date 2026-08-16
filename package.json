@@ -1,6 +1,6 @@
 {
     "name": "dockerbridge",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "type": "module",
     "engines": {
         "node": ">= 22.14.0"
@@ -17,10 +17,10 @@
         "release-final": "tsx ./extra/test-docker.ts && tsx extra/update-version.ts && npm run build:frontend && npm run build:docker",
         "release-beta": "tsx ./extra/test-docker.ts && tsx extra/update-version.ts && npm run build:frontend && npm run build:docker-beta",
         "build:frontend": "webpack --config ./frontend-react/webpack.config.cjs --mode production",
-        "build:docker-base": "docker buildx build --platform linux/amd64,linux/arm64 -t kilomac/dockerbridge:base -f ./docker/Base.Dockerfile . --push",
-        "build:docker": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64 -t kilomac/dockerbridge:latest -t kilomac/dockerbridge:$VERSION --target release -f ./docker/Dockerfile . --push",
-        "build:docker-beta": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64 -t kilomac/dockerbridge:beta -t kilomac/dockerbridge:$VERSION --target release -f ./docker/Dockerfile . --push",
-        "build:healthcheck": "docker buildx build -f docker/BuildHealthCheck.Dockerfile --platform linux/amd64,linux/arm64 -t kilomac/dockerbridge:build-healthcheck . --push",
+        "build:docker-base": "docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/ajings3c/dockerbridge:base -f ./docker/Base.Dockerfile . --push",
+        "build:docker": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/ajings3c/dockerbridge:latest -t ghcr.io/ajings3c/dockerbridge:$VERSION --target release -f ./docker/Dockerfile . --push",
+        "build:docker-beta": "node ./extra/env2arg.js docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/ajings3c/dockerbridge:beta -t ghcr.io/ajings3c/dockerbridge:$VERSION --target release -f ./docker/Dockerfile . --push",
+        "build:healthcheck": "docker buildx build -f docker/BuildHealthCheck.Dockerfile --platform linux/amd64,linux/arm64 -t ghcr.io/ajings3c/dockerbridge:build-healthcheck . --push",
         "test:system-backup": "tsx ./extra/test-system-backup.ts",
         "test:compose-editor": "tsx ./extra/test-compose-editor.ts",
         "test:docker-resources": "tsx ./extra/test-docker-resources.ts",
@@ -29,8 +29,8 @@
         "test:security-hardening": "tsx ./extra/test-security-hardening.ts",
         "test:terminal": "tsx ./extra/test-terminal.ts",
         "test": "npm run test:compose-editor && npm run test:docker-resources && npm run test:agent-management && npm run test:user-management && npm run test:system-backup && npm run test:security-hardening && npm run test:terminal",
-        "release-nightly": "npm run build:frontend && docker buildx build --platform linux/amd64,linux/arm64 -t kilomac/dockerbridge:nightly --target nightly -f ./docker/Dockerfile . --push",
-        "start-docker": "docker run --rm -p 8612:8612 --name dockerbridge -v /var/run/docker.sock:/var/run/docker.sock -v ./data:/app/data -v /opt/stacks:/opt/stacks -e DOCKGE_STACKS_DIR=/opt/stacks -e DOCKERBRIDGE_ENABLE_CONSOLE=true -e DOCKERBRIDGE_CONSOLE_TARGET=runtime kilomac/dockerbridge:latest",
+        "release-nightly": "npm run build:frontend && docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/ajings3c/dockerbridge:nightly --target nightly -f ./docker/Dockerfile . --push",
+        "start-docker": "docker run --rm -p 8612:8612 --name dockerbridge -v /var/run/docker.sock:/var/run/docker.sock -v ./data:/app/data -v /opt/stacks:/opt/stacks -e DOCKGE_STACKS_DIR=/opt/stacks -e DOCKERBRIDGE_ENABLE_CONSOLE=true -e DOCKERBRIDGE_CONSOLE_TARGET=runtime ghcr.io/ajings3c/dockerbridge:latest",
         "mark-as-nightly": "tsx ./extra/mark-as-nightly.ts",
         "reformat-changelog": "tsx ./extra/reformat-changelog.ts",
         "reset-password": "tsx ./extra/reset-password.ts"

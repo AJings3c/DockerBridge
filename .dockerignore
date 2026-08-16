@@ -16,8 +16,6 @@ exploit_geneva_*
 
 # Docker extra
 docker
-frontend
-frontend-react
 extra/test-react-ui.py
 /*.exit
 /*.log

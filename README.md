@@ -23,28 +23,55 @@ DockerBridge 在 Dockge 的 Compose 项目管理能力上继续开发，增加 D
 
 ## 运行要求
 
-- Node.js `>= 22.14.0`
-- Docker Engine 或兼容的 Docker API
-- Docker Compose V2
-- 建议使用能够挂载 Docker Socket 的 Linux 主机部署容器版本
+- Docker Engine 或兼容的 Docker API，以及可在命令行调用的 Docker CLI
+- 容器部署和本地构建需要 Docker Compose V2
+- 仅从源码运行时需要 Node.js `>= 22.14.0`；Release 便携包已经包含 Node.js 运行时
+- 建议在能够挂载 Docker Socket 的 Linux 主机上部署容器版本
 
 挂载 `/var/run/docker.sock` 等同于授予 Docker 管理权限。请仅向受信任用户开放 DockerBridge，并在生产环境中使用反向代理、HTTPS 和严格的账号权限。
 
 DockerBridge 备份不包含 Docker 镜像、数据卷或整台宿主机，当前仅支持 SQLite 数据库。Docker daemon 配置操作还需要挂载配置文件并设置 `DOCKERBRIDGE_DAEMON_JSON`。
 
-## Docker Compose 启动
+## 使用发布镜像部署
 
-仓库中的 `compose.yaml` 默认使用 `kilomac/dockerbridge:latest`，将数据保存在 `./data`，将 Compose 项目保存在 `/opt/stacks`，并监听 `8612` 端口：
+仓库中的 `compose.yaml` 默认使用本项目发布的 `ghcr.io/ajings3c/dockerbridge:latest`，将数据保存在 `./data`，将 Compose 项目保存在 `/opt/stacks`，并监听 `8612` 端口：
 
 ```bash
 git clone https://github.com/AJings3c/DockerBridge.git
 cd DockerBridge
+docker compose pull
 docker compose up -d
 ```
 
 启动后访问 <http://localhost:8612> 并创建首个管理员账号。
 
-> `docker compose up -d` 运行的是 `compose.yaml` 中声明的镜像，不会自动编译刚拉取的源码。需要验证当前源码时，请使用下方源码方式运行，或先构建镜像并替换 `image` 配置。
+## 克隆仓库并构建当前源码
+
+需要运行当前分支代码而不是已发布镜像时，执行：
+
+```bash
+git clone https://github.com/AJings3c/DockerBridge.git
+cd DockerBridge
+docker compose up -d --build
+```
+
+Dockerfile 会在镜像内安装依赖并构建前端，不要求宿主机预先安装 Node.js。再次更新源码后，重新执行 `docker compose up -d --build`。
+
+## 下载 Release 便携包
+
+[GitHub Releases](https://github.com/AJings3c/DockerBridge/releases) 提供针对 Linux、Windows 和 macOS 构建的便携包。文件名包含版本、系统和 CPU 架构，例如 `dockerbridge-1.5.1-linux-x64.tar.gz`。下载后可使用同一页面的 `SHA256SUMS.txt` 校验文件。
+
+Linux 或 macOS：
+
+```bash
+tar -xzf dockerbridge-<版本>-<系统>-<架构>.tar.gz
+cd dockerbridge-<版本>-<系统>-<架构>
+./dockerbridge
+```
+
+Windows：解压 `.zip` 后运行 `dockerbridge.cmd`。
+
+便携包包含 Node.js 运行时、已构建前端和当前平台对应的原生依赖，但 Docker CLI、Docker Engine 与 Compose 仍需自行安装。它是可直接运行的完整目录，不是单文件静态可执行程序；请保留解压后的目录结构。默认数据和 Compose 项目分别写入包内的 `data` 与 `stacks` 目录。
 
 ## 从源码运行
 

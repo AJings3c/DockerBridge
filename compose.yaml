@@ -1,6 +1,10 @@
 services:
   dockerbridge:
-    image: kilomac/dockerbridge:latest
+    image: ghcr.io/ajings3c/dockerbridge:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: release
     restart: unless-stopped
     # Host terminal access is equivalent to administrative shell access.
     # The default console runs inside the DockerBridge container; uncomment
