@@ -13,9 +13,6 @@ import { log } from "./log";
 import fs from "node:fs";
 import path from "node:path";
 import { ChildProcessWithoutNullStreams, spawn as spawnProcess } from "node:child_process";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
 
 export interface ConsoleProfile {
     target: "host" | "runtime";
@@ -160,18 +157,6 @@ function hasHostPIDNamespace(hostPid : number) {
     const runtimeRoot = fs.statSync("/");
     const hostRoot = fs.statSync(`/proc/${hostPid}/root`);
     return runtimeRoot.dev !== hostRoot.dev || runtimeRoot.ino !== hostRoot.ino;
-}
-
-function nativePTYAvailable() {
-    if (os.platform() !== "win32") {
-        return true;
-    }
-    try {
-        const packageRoot = path.dirname(require.resolve("@homebridge/node-pty-prebuilt-multiarch/package.json"));
-        return [ "Release", "Debug" ].some(configuration => fs.existsSync(path.join(packageRoot, "build", configuration, "conpty.node")));
-    } catch (error) {
-        return false;
-    }
 }
 
 export function resolveConsoleCommand(server : DockgeServer) : ConsoleCommand {
@@ -345,23 +330,29 @@ export class Terminal {
         }
 
         try {
-            try {
-                if (!nativePTYAvailable()) {
-                    throw new Error("Native ConPTY module is not installed for this Node runtime.");
-                }
-                this._ptyProcess = pty.spawn(this.file, this.args, {
-                    name: this.name,
-                    cwd: this.cwd,
-                    cols: TERMINAL_COLS,
-                    rows: this.rows,
-                });
-                this._transport = "pty";
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                log.warn("Terminal", `PTY unavailable for ${this.name}, using pipe mode: ${message}`);
+            if (os.platform() === "win32") {
+                // node-pty's ConPTY helper can retain console handles after a
+                // shell exits. PowerShell remains interactive over pipes and
+                // can shut down without leaking a native helper process.
                 const args = Array.isArray(this.args) ? this.args : [ this.args ];
                 this._ptyProcess = new PipeTerminalProcess(this.file, args, this.cwd);
                 this._transport = "pipe";
+            } else {
+                try {
+                    this._ptyProcess = pty.spawn(this.file, this.args, {
+                        name: this.name,
+                        cwd: this.cwd,
+                        cols: TERMINAL_COLS,
+                        rows: this.rows,
+                    });
+                    this._transport = "pty";
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    log.warn("Terminal", `PTY unavailable for ${this.name}, using pipe mode: ${message}`);
+                    const args = Array.isArray(this.args) ? this.args : [ this.args ];
+                    this._ptyProcess = new PipeTerminalProcess(this.file, args, this.cwd);
+                    this._transport = "pipe";
+                }
             }
 
             // On Data
