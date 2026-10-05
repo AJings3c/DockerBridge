@@ -343,15 +343,15 @@ export class ComposeEditor {
         } finally {
             // Windows releases directory handles shortly after the child exits;
             // a single rm can hit EBUSY while the child or a scanner still holds one.
+            // The directory is disposable, so give the lock time to clear and give up quietly.
             for (let attempt = 0; ; attempt++) {
                 try {
                     await fsAsync.rm(directory, { recursive: true,
                         force: true });
                     break;
-                } catch (error) {
-                    const code = (error as NodeJS.ErrnoException).code;
-                    if (attempt >= 4 || !code || ![ "EBUSY", "EPERM", "ENOTEMPTY", "ENOENT" ].includes(code)) {
-                        throw error;
+                } catch {
+                    if (attempt >= 4) {
+                        break;
                     }
                     await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
                 }
