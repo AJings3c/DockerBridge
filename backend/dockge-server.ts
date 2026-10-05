@@ -10,7 +10,6 @@ import express, { Express } from "express";
 import { parse } from "ts-command-line-args";
 import https from "https";
 import http from "http";
-import { Router } from "./router";
 import { Socket } from "socket.io";
 import { MainSocketHandler } from "./socket-handlers/main-socket-handler";
 import { SocketHandler } from "./socket-handler";
@@ -53,13 +52,6 @@ export class DockgeServer {
     io : socketIO.Server;
     config : Config;
     indexHTML : string = "";
-
-    /**
-     * List of express routers
-     */
-    routerList : Router[] = [
-        new MainRouter(),
-    ];
 
     /**
      * List of socket handlers (no agent support)
@@ -229,9 +221,7 @@ export class DockgeServer {
         }
 
         // Binding Routers
-        for (const router of this.routerList) {
-            this.app.use(router.create(this.app, this));
-        }
+        this.app.use(new MainRouter().create(this.app, this));
 
         // Static files
         this.app.use("/", expressStaticGzip("frontend-dist", {

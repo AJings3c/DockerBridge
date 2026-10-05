@@ -1,8 +1,7 @@
 import { DockgeServer } from "../dockge-server";
-import { Router } from "../router";
 import express, { Express, Router as ExpressRouter } from "express";
 
-export class MainRouter extends Router {
+export class MainRouter {
     create(app: Express, server: DockgeServer): ExpressRouter {
         const router = express.Router();
 

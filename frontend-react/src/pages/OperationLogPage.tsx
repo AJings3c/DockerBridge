@@ -7,6 +7,7 @@ import { SkeletonRows } from "@/components/SkeletonRows";
 import { Icon } from "@/components/Icon";
 import { MetricStrip, Notice, PageHeader, Panel, SearchField, useModalDialog } from "@/components/ui";
 import { exportOperationLogs, OperationLogQuery, queryOperationLogs } from "@/services/runtime";
+import { formatDuration, formatSnapshot, formatTime } from "@/services/format";
 import { OperationLogItem, OperationLogResponse } from "@/types/domain";
 import pageStyles from "./Page.module.css";
 import styles from "./OperationLogPage.module.css";
@@ -105,31 +106,6 @@ function resultStatus(result : string) {
     return "created";
 }
 
-function formatTime(value : string) {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-}
-
-function formatDuration(value : number | null) {
-    if (value == null) {
-        return "—";
-    }
-    if (value < 1000) {
-        return `${value} ms`;
-    }
-    return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)} s`;
-}
-
-function formatSnapshot(value : string | null) {
-    if (!value) {
-        return "无快照";
-    }
-    try {
-        return JSON.stringify(JSON.parse(value), null, 2);
-    } catch (error) {
-        return value;
-    }
-}
 
 function operationObjectTarget(item : OperationLogItem) {
     const params = new URLSearchParams();

@@ -4,6 +4,7 @@ import { Button } from "@/components/primitives/Button";
 import { FailureDialog, Notice, PageHeader, Panel, PanelHeader } from "@/components/ui";
 import { emitWithAck } from "@/services/realtime/client";
 import { createSystemBackup, createUser, deleteSystemBackup, previewDockerDaemonConfig, previewSystemRestore, queryDockerDaemonConfig, querySystemBackups, queryUsers, resetUserPassword, restartDockerDaemon, restoreSystemBackup, rollbackDockerDaemonConfig, saveDockerDaemonConfig, updateUser, validateSystemBackup } from "@/services/runtime";
+import { formatBytes } from "@/services/format";
 import { ApiResponse, DockerDaemonConfigForm, DockerDaemonConfigPreviewResponse, DockerDaemonConfigResponse, SystemBackupSummary, SystemRestorePreviewResponse, UserRole, UserSummary } from "@/types/domain";
 import styles from "./Page.module.css";
 import dockerStyles from "./SettingsDocker.module.css";
@@ -44,17 +45,6 @@ function lines(value : string[]) {
 
 function parseLines(value : string) {
     return value.split(/[\n,]/).map(item => item.trim()).filter(Boolean);
-}
-
-function formatBytes(value : number) {
-    const units = [ "B", "KiB", "MiB", "GiB", "TiB" ];
-    let size = value;
-    let unit = 0;
-    while (size >= 1024 && unit < units.length - 1) {
-        size /= 1024;
-        unit += 1;
-    }
-    return `${unit === 0 ? size : size.toFixed(1)} ${units[unit]}`;
 }
 
 export function SettingsPage() {

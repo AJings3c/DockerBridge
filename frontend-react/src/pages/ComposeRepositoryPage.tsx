@@ -6,6 +6,7 @@ import { SkeletonRows } from "@/components/SkeletonRows";
 import { Icon } from "@/components/Icon";
 import { MetricStrip, Notice, PageHeader, Panel, SearchField } from "@/components/ui";
 import { queryComposeRepository, RepositoryQuery } from "@/services/runtime";
+import { formatBytes } from "@/services/format";
 import { useAppSelector } from "@/store/hooks";
 import styles from "./Page.module.css";
 import repositoryStyles from "./ComposeRepositoryPage.module.css";
@@ -26,16 +27,6 @@ function statusLabel(status : string) {
         inactive: "未运行",
         unknown: "未知",
     }[status] || status;
-}
-
-function formatSize(bytes : number) {
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-    if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function ComposeRepositoryPage() {
@@ -93,7 +84,7 @@ export function ComposeRepositoryPage() {
                         status: event.target.value }))} value={query.status}><option value="all">全部状态</option><option value="running">运行中</option><option value="exited">已退出</option><option value="created">已创建</option><option value="inactive">未运行</option><option value="unknown">未知</option></select></label>
                 </div>
                 {loading && !data ? <SkeletonRows rows={9} /> : data?.items.length === 0 ? <EmptyState title="没有匹配的 Compose 配置" description="调整来源、状态或搜索条件；扫描只收录顶层 services 非空的 YAML 文件。" /> : (
-                    <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>项目 / 文件</th><th>状态</th><th className={styles.mobileOptional}>服务</th><th className={styles.mobileOptional}>来源</th><th className={styles.mobileOptional}>修改时间</th><th>访问</th></tr></thead><tbody>{data?.items.map(item => <tr key={item.id}><td><div className={styles.primaryCell}><strong>{item.projectName}</strong><small className={styles.mono} title={item.filePath}>{item.filePath}</small></div></td><td><StatusBadge status={item.status} label={statusLabel(item.status)} /></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{item.serviceCount} 个服务</span><small title={item.services.join(", ")}>{item.services.slice(0, 3).join(", ")}{item.services.length > 3 ? ` +${item.services.length - 3}` : ""}</small></div></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{item.source}</span><small>{item.managed ? "平台目录" : "外部目录"}</small></div></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{new Date(item.modifiedAt).toLocaleDateString()}</span><small>{formatSize(item.size)}</small></div></td><td><span className={item.readable ? "text-[var(--success)]" : "text-[var(--danger)]"}>{item.editable ? "可编辑" : item.readable ? "只读" : "不可读"}</span></td></tr>)}</tbody></table></div>
+                    <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>项目 / 文件</th><th>状态</th><th className={styles.mobileOptional}>服务</th><th className={styles.mobileOptional}>来源</th><th className={styles.mobileOptional}>修改时间</th><th>访问</th></tr></thead><tbody>{data?.items.map(item => <tr key={item.id}><td><div className={styles.primaryCell}><strong>{item.projectName}</strong><small className={styles.mono} title={item.filePath}>{item.filePath}</small></div></td><td><StatusBadge status={item.status} label={statusLabel(item.status)} /></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{item.serviceCount} 个服务</span><small title={item.services.join(", ")}>{item.services.slice(0, 3).join(", ")}{item.services.length > 3 ? ` +${item.services.length - 3}` : ""}</small></div></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{item.source}</span><small>{item.managed ? "平台目录" : "外部目录"}</small></div></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span>{new Date(item.modifiedAt).toLocaleDateString()}</span><small>{formatBytes(item.size)}</small></div></td><td><span className={item.readable ? "text-[var(--success)]" : "text-[var(--danger)]"}>{item.editable ? "可编辑" : item.readable ? "只读" : "不可读"}</span></td></tr>)}</tbody></table></div>
                 )}
                 {data && <div className={repositoryStyles.pagination}><span>第 {data.pagination.page} / {data.pagination.pageCount} 页，共 {data.pagination.total} 项</span><label>每页<select onChange={event => setQuery(current => ({ ...current,
                     page: 1,

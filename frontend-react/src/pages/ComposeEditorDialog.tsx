@@ -3,6 +3,7 @@ import { Button } from "@/components/primitives/Button";
 import { Icon } from "@/components/Icon";
 import { FailureDialog, Notice, useModalDialog } from "@/components/ui";
 import { ComposeDraftRequest, previewComposeDraft, previewComposeRevision, queryComposeEditor, queryComposeRevisions, restoreComposeRevision, saveComposeDraft } from "@/services/runtime";
+import { formatBytes } from "@/services/format";
 import { ComposeEditorPreview, ComposeRevisionSummary, EndpointSummary, StackSummary } from "@/types/domain";
 import styles from "./ComposeEditor.module.css";
 
@@ -34,10 +35,6 @@ function revisionReason(reason : ComposeRevisionSummary["reason"]) {
         deploy: "保存并部署",
         rollback: "版本恢复",
         "pre-change": "变更前快照" }[reason];
-}
-
-function formatBytes(value : number) {
-    return value < 1024 ? `${value} B` : `${(value / 1024).toFixed(1)} KiB`;
 }
 
 function sourceLines(source : string) {

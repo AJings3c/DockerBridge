@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/primitives/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { FailureDialog, Notice, PageHeader, Panel, SearchField, SegmentedControl, Toolbar, useModalDialog } from "@/components/ui";
 import { cleanContainerCache, containerAction, imageAction, onImagePullProgress, preflightHostPort, previewContainerCache, previewImagePrune, pruneImages, queryContainerLogs, refreshSnapshot, rollbackHostPort, tagImage, updateHostPort } from "@/services/runtime";
+import { formatBytes, formatTime } from "@/services/format";
 import { useAppSelector } from "@/store/hooks";
 import { CacheCleanupPreviewResponse, DockerContainer, DockerPort, DockerPortPreflightResponse, DockerPortRollback, DockerPortUpdatePayload, ImagePrunePreviewResponse } from "@/types/domain";
 import styles from "./Page.module.css";
@@ -36,28 +37,6 @@ interface PortFailure {
     action: string;
     message: string;
     rollback?: DockerPortRollback;
-}
-
-function formatDate(value : string) {
-    if (!value) {
-        return "—";
-    }
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-}
-
-function formatBytes(value : number) {
-    if (value <= 0) {
-        return "未知";
-    }
-    const units = [ "B", "KiB", "MiB", "GiB", "TiB" ];
-    let amount = value;
-    let unit = 0;
-    while (amount >= 1024 && unit < units.length - 1) {
-        amount /= 1024;
-        unit += 1;
-    }
-    return `${amount.toFixed(unit === 0 ? 0 : amount < 10 ? 1 : 0)} ${units[unit]}`;
 }
 
 function ContainerDetailDialog({ container, onClose, onUpdated } : { container: DockerContainer; onClose: () => void; onUpdated: () => Promise<unknown> }) {
@@ -144,7 +123,7 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                 message: response.msg || "缓存清理失败" });
             return;
         }
-        setCacheFeedback(`已清理 ${response.cleaned.length} 个声明目录、${response.fileCount} 个文件，预计释放 ${formatBytes(response.totalBytes)}。`);
+        setCacheFeedback(`已清理 ${response.cleaned.length} 个声明目录、${response.fileCount} 个文件，预计释放 ${formatBytes(response.totalBytes, "未知")}。`);
         setCachePreview(undefined);
         await onUpdated();
     };
@@ -243,7 +222,7 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                 {section === "overview" ? <div className={detailStyles.body}>
                     <dl className={detailStyles.facts}>
                         <div><dt>运行身份</dt><dd>{container.runAs}</dd></div><div><dt>工作目录</dt><dd>{container.workingDir}</dd></div><div><dt>重启策略</dt><dd>{container.restartPolicy}</dd></div><div><dt>网络模式</dt><dd>{container.networkMode}</dd></div>
-                        <div><dt>健康状态</dt><dd>{container.health}</dd></div><div><dt>退出码</dt><dd>{container.exitCode ?? "—"}</dd></div><div><dt>创建时间</dt><dd>{formatDate(container.createdAt)}</dd></div><div><dt>启动时间</dt><dd>{formatDate(container.startedAt)}</dd></div>
+                        <div><dt>健康状态</dt><dd>{container.health}</dd></div><div><dt>退出码</dt><dd>{container.exitCode ?? "—"}</dd></div><div><dt>创建时间</dt><dd>{formatTime(container.createdAt)}</dd></div><div><dt>启动时间</dt><dd>{formatTime(container.startedAt)}</dd></div>
                     </dl>
                     <div className={detailStyles.resourceStrip}><div><span>CPU</span><strong>{container.cpuPercent}</strong></div><div><span>内存</span><strong>{container.memoryUsage}</strong></div><div><span>网络 I/O</span><strong>{container.networkIO}</strong></div><div><span>磁盘 I/O</span><strong>{container.blockIO}</strong></div></div>
                     <section className={detailStyles.command}><h3>启动命令</h3><pre>{[ ...container.entrypoint, ...container.command ].join(" ") || "镜像默认命令"}</pre></section>
@@ -258,7 +237,7 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                                 setPortEdit({ port,
                                     hostPort: port.hostPort });
                             }} title={!canDestructive ? "仅管理员可修改端口" : undefined}>修改</Button>)}</td></tr>;
-                        })}</tbody></table>}{portEdit && <div className={detailStyles.portEditor}><div><strong>{portEdit.port.hostIp || "0.0.0.0"}:{portEdit.hostPort || "—"}</strong><span>{portEdit.preflight ? `${portEdit.preflight.target} 可使用该端口；应用会重建容器${portEdit.preflight.cacheCleanup.eligibleCount > 0 ? `，并清理 ${portEdit.preflight.cacheCleanup.eligibleCount} 个声明缓存目录（预计 ${formatBytes(portEdit.preflight.cacheCleanup.totalBytes)}）` : ""}，现有连接将短暂中断。` : "先执行冲突预检，不会修改当前容器。"}</span></div>{portEdit.preflight ? <Button loading={portBusy === "apply"} size="compact" variant="primary" onClick={() => void applyPort()}>确认重建并应用</Button> : <Button disabled={!portEdit.hostPort.trim()} loading={portBusy === "preflight"} size="compact" onClick={() => void preflightPort()}>检查端口</Button>}</div>}</section>
+                        })}</tbody></table>}{portEdit && <div className={detailStyles.portEditor}><div><strong>{portEdit.port.hostIp || "0.0.0.0"}:{portEdit.hostPort || "—"}</strong><span>{portEdit.preflight ? `${portEdit.preflight.target} 可使用该端口；应用会重建容器${portEdit.preflight.cacheCleanup.eligibleCount > 0 ? `，并清理 ${portEdit.preflight.cacheCleanup.eligibleCount} 个声明缓存目录（预计 ${formatBytes(portEdit.preflight.cacheCleanup.totalBytes, "未知")}）` : ""}，现有连接将短暂中断。` : "先执行冲突预检，不会修改当前容器。"}</span></div>{portEdit.preflight ? <Button loading={portBusy === "apply"} size="compact" variant="primary" onClick={() => void applyPort()}>确认重建并应用</Button> : <Button disabled={!portEdit.hostPort.trim()} loading={portBusy === "preflight"} size="compact" onClick={() => void preflightPort()}>检查端口</Button>}</div>}</section>
                         <section><h3>网络</h3>{container.networks.length === 0 ? <p className={detailStyles.emptyCopy}>没有加入网络。</p> : <table><thead><tr><th>名称</th><th>地址</th></tr></thead><tbody>{container.networks.map(network => <tr key={network.name}><td><Button size="compact" variant="ghost" onClick={() => navigate(`/resources?tab=networks&resource=${encodeURIComponent(network.name)}&endpoint=local`)}>{network.name}</Button></td><td>{network.ipAddress || "—"}</td></tr>)}</tbody></table>}</section>
                     </div>
                     <section className={detailStyles.mounts}><h3>挂载</h3>{container.mounts.length === 0 ? <p className={detailStyles.emptyCopy}>没有挂载卷或目录。</p> : <table><thead><tr><th>类型</th><th>来源</th><th>容器路径</th><th>缓存声明</th></tr></thead><tbody>{container.mounts.map((mount, index) => <tr key={`${mount.destination}-${index}`}><td>{mount.type}</td><td title={mount.source}>{mount.type === "volume" && mount.name ? <Button size="compact" variant="ghost" onClick={() => navigate(`/resources?tab=volumes&resource=${encodeURIComponent(mount.name)}&endpoint=local`)}>{mount.name}</Button> : mount.name || mount.source || "—"}</td><td>{mount.destination}</td><td>{mount.cache ? <StatusBadge label="可清理缓存" status="created" /> : "—"}</td></tr>)}</tbody></table>}</section>
@@ -271,8 +250,8 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                         <div className={detailStyles.cacheToolbar}><div><strong>显式声明的缓存目录</strong><span>先解析 bind mount、检查路径边界并估算文件，再允许删除。</span></div><Button loading={cacheBusy === "preview"} onClick={() => void previewCache()}><Icon name="refresh" size={14} />生成预览</Button></div>
                         {cacheFeedback && <Notice>{cacheFeedback}</Notice>}
                         {!cachePreview ? <div className={detailStyles.cacheDeclarations}>{container.cacheDirs.map(cacheDir => <code key={cacheDir}>{cacheDir}</code>)}</div> : <>
-                            <div className={detailStyles.cacheSummary}><span>可清理 <strong>{cachePreview.eligibleCount}</strong> 个目录</span><span>预计 <strong>{formatBytes(cachePreview.totalBytes)}</strong></span><span>预览于 <strong>{new Date(cachePreview.generatedAt).toLocaleTimeString()}</strong></span><Button disabled={cachePreview.eligibleCount === 0} loading={cacheBusy === "clean"} variant="danger" onClick={() => void applyCacheCleanup()}>确认清理</Button></div>
-                            <div className={detailStyles.cacheTableScroller}><table className={detailStyles.cacheTable}><thead><tr><th>容器目录</th><th>宿主机绑定源</th><th>估算</th><th>结果</th></tr></thead><tbody>{cachePreview.entries.map(entry => <tr key={entry.cacheDir}><td><code>{entry.cacheDir}</code></td><td><code>{entry.source || "—"}</code></td><td>{entry.eligible ? `${formatBytes(entry.estimatedBytes)} · ${entry.fileCount} 文件${entry.truncated ? "+" : ""}` : "—"}</td><td>{entry.eligible ? <StatusBadge label={entry.truncated ? "可清理，估算已截断" : "可清理"} status="running" /> : <span className={detailStyles.skipReason}>{entry.reason || "已跳过"}</span>}</td></tr>)}</tbody></table></div>
+                            <div className={detailStyles.cacheSummary}><span>可清理 <strong>{cachePreview.eligibleCount}</strong> 个目录</span><span>预计 <strong>{formatBytes(cachePreview.totalBytes, "未知")}</strong></span><span>预览于 <strong>{new Date(cachePreview.generatedAt).toLocaleTimeString()}</strong></span><Button disabled={cachePreview.eligibleCount === 0} loading={cacheBusy === "clean"} variant="danger" onClick={() => void applyCacheCleanup()}>确认清理</Button></div>
+                            <div className={detailStyles.cacheTableScroller}><table className={detailStyles.cacheTable}><thead><tr><th>容器目录</th><th>宿主机绑定源</th><th>估算</th><th>结果</th></tr></thead><tbody>{cachePreview.entries.map(entry => <tr key={entry.cacheDir}><td><code>{entry.cacheDir}</code></td><td><code>{entry.source || "—"}</code></td><td>{entry.eligible ? `${formatBytes(entry.estimatedBytes, "未知")} · ${entry.fileCount} 文件${entry.truncated ? "+" : ""}` : "—"}</td><td>{entry.eligible ? <StatusBadge label={entry.truncated ? "可清理，估算已截断" : "可清理"} status="running" /> : <span className={detailStyles.skipReason}>{entry.reason || "已跳过"}</span>}</td></tr>)}</tbody></table></div>
                         </>}
                     </>}
                 </div>}
@@ -389,7 +368,7 @@ export function ContainersPage() {
             }
             const skipped = preview.entries.length - preview.eligibleCount;
             const impact = preview.eligibleCount > 0
-                ? `重建前将清理 ${preview.eligibleCount} 个声明缓存目录，预计 ${formatBytes(preview.totalBytes)}${skipped > 0 ? `；另有 ${skipped} 个目录因安全校验跳过` : ""}。`
+                ? `重建前将清理 ${preview.eligibleCount} 个声明缓存目录，预计 ${formatBytes(preview.totalBytes, "未知")}${skipped > 0 ? `；另有 ${skipped} 个目录因安全校验跳过` : ""}。`
                 : "没有符合安全规则的声明缓存目录会被清理。";
             if (!window.confirm(`确认重建容器 ${name}？${impact}`)) {
                 return;
@@ -509,7 +488,7 @@ export function ContainersPage() {
                 message: response.msg || "镜像清理失败" });
             return;
         }
-        setFeedback(`已删除 ${response.deleted} 个镜像，预计释放 ${formatBytes(response.totalBytes)}。`);
+        setFeedback(`已删除 ${response.deleted} 个镜像，预计释放 ${formatBytes(response.totalBytes, "未知")}。`);
         setPrunePreview(undefined);
         await refreshSnapshot();
     };
@@ -554,7 +533,7 @@ export function ContainersPage() {
                 {pullProgress.length > 0 && <section className={resourceStyles.progress}><header><strong>{pullingImage ? `正在拉取 ${pullingImage}` : "最近一次拉取输出"}</strong><span>{pullProgress.length} 条状态</span></header><pre>{pullProgress.join("\n")}</pre></section>}
                 {tagEdit && <form className={resourceStyles.tagEditor} onSubmit={saveTag}><div><strong>为镜像添加标签</strong><span className={styles.mono}>{tagEdit.source}</span></div><input aria-label="新镜像标签" autoFocus disabled={tagging} onChange={event => setTagEdit({ ...tagEdit,
                     target: event.target.value })} placeholder="repository/image:new-tag" value={tagEdit.target} /><Button disabled={!tagEdit.target.trim()} loading={tagging} variant="primary" type="submit">保存标签</Button><Button disabled={tagging} variant="ghost" onClick={() => setTagEdit(undefined)} type="button">取消</Button></form>}
-                {prunePreview && <section className={resourceStyles.prunePreview}><header><div><strong>{prunePreview.candidates.length === 0 ? "没有可清理镜像" : `将删除 ${prunePreview.candidates.length} 个镜像`}</strong><span>预计释放 {formatBytes(prunePreview.totalBytes)} · 预览于 {new Date(prunePreview.generatedAt).toLocaleTimeString()}</span></div><Button disabled={prunePreview.candidates.length === 0} loading={pruneBusy === "delete"} variant="danger" onClick={() => void applyPrune()}>确认清理</Button></header>{prunePreview.candidates.length > 0 && <ul>{prunePreview.candidates.slice(0, 12).map(image => <li key={image.id}><code>{image.id}</code><span>{image.repoTags.join(", ") || "悬空镜像"}</span><small>{image.size || formatBytes(image.sizeBytes)}</small></li>)}</ul>}{prunePreview.candidates.length > 12 && <p>另有 {prunePreview.candidates.length - 12} 个候选镜像未展开显示。</p>}</section>}
+                {prunePreview && <section className={resourceStyles.prunePreview}><header><div><strong>{prunePreview.candidates.length === 0 ? "没有可清理镜像" : `将删除 ${prunePreview.candidates.length} 个镜像`}</strong><span>预计释放 {formatBytes(prunePreview.totalBytes, "未知")} · 预览于 {new Date(prunePreview.generatedAt).toLocaleTimeString()}</span></div><Button disabled={prunePreview.candidates.length === 0} loading={pruneBusy === "delete"} variant="danger" onClick={() => void applyPrune()}>确认清理</Button></header>{prunePreview.candidates.length > 0 && <ul>{prunePreview.candidates.slice(0, 12).map(image => <li key={image.id}><code>{image.id}</code><span>{image.repoTags.join(", ") || "悬空镜像"}</span><small>{image.size || formatBytes(image.sizeBytes, "未知")}</small></li>)}</ul>}{prunePreview.candidates.length > 12 && <p>另有 {prunePreview.candidates.length - 12} 个候选镜像未展开显示。</p>}</section>}
             </Panel>}
             <Panel>
                 {tab === "containers" ? (

@@ -6,6 +6,7 @@ import { SkeletonRows } from "@/components/SkeletonRows";
 import { Icon } from "@/components/Icon";
 import { FailureDialog, MetricStrip, Notice, PageHeader, Panel, useModalDialog } from "@/components/ui";
 import { addAgent, AgentConnectionRequest, diagnoseAgent, previewAgentRemoval, queryAgents, removeAgent, rotateAgentCredentials, testAgentConnection, updateAgent } from "@/services/runtime";
+import { formatBytes, formatTime, formatUptime } from "@/services/format";
 import { realtime } from "@/services/realtime/client";
 import { AgentCompatibility, AgentDiagnostics, AgentManagementResponse, AgentManagementSummary, AgentRemovalPreview, AgentTestResult, EndpointConnectionStatus } from "@/types/domain";
 import pageStyles from "./Page.module.css";
@@ -23,37 +24,6 @@ const emptyCandidate : AgentConnectionRequest = {
     username: "",
     password: "",
 };
-
-function formatTime(value : string | null | undefined) {
-    if (!value) {
-        return "从未";
-    }
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-}
-
-function formatBytes(value : number) {
-    const units = [ "B", "KiB", "MiB", "GiB", "TiB" ];
-    let size = Number.isFinite(value) ? value : 0;
-    let unit = 0;
-    while (size >= 1024 && unit < units.length - 1) {
-        size /= 1024;
-        unit += 1;
-    }
-    return `${unit === 0 ? size : size.toFixed(1)} ${units[unit]}`;
-}
-
-function formatUptime(value : number | undefined) {
-    if (!value || value < 0) {
-        return "未知";
-    }
-    const days = Math.floor(value / 86400);
-    const hours = Math.floor((value % 86400) / 3600);
-    if (days > 0) {
-        return `${days} 天 ${hours} 小时`;
-    }
-    return `${hours} 小时`;
-}
 
 function statusLabel(status : EndpointConnectionStatus) {
     return status === "online" ? "在线" : status === "connecting" ? "连接中" : "离线";
@@ -151,7 +121,7 @@ function RemovalDialog({ preview, busy, onClose, onConfirm } : {
         }} ref={dialogRef}>
             <div className={styles.dialogContent}>
                 <header className={styles.dialogHeader}><div><h2 id="agent-removal-title">移除 Agent 注册</h2><p>此操作只删除控制器登记，不会停止远程 Docker 工作负载。</p></div><button aria-label="关闭" disabled={busy} onClick={onClose} type="button"><Icon name="close" /></button></header>
-                <dl className={styles.removalFacts}><div><dt>节点</dt><dd>{preview.name}</dd></div><div><dt>端点</dt><dd className={styles.mono}>{preview.endpoint}</dd></div><div><dt>连接</dt><dd>{statusLabel(preview.status)}</dd></div><div><dt>最后在线</dt><dd>{formatTime(preview.lastSeenAt)}</dd></div></dl>
+                <dl className={styles.removalFacts}><div><dt>节点</dt><dd>{preview.name}</dd></div><div><dt>端点</dt><dd className={styles.mono}>{preview.endpoint}</dd></div><div><dt>连接</dt><dd>{statusLabel(preview.status)}</dd></div><div><dt>最后在线</dt><dd>{formatTime(preview.lastSeenAt, "从未")}</dd></div></dl>
                 {preview.diagnostics && <div className={styles.removalImpact}><strong>远程运行态</strong><p>{preview.diagnostics.docker.containers} 个容器，{preview.diagnostics.docker.composeProjects} 个 Compose 项目，{preview.diagnostics.docker.images} 个镜像。</p></div>}
                 {preview.warnings.length > 0 && <div className={styles.warningList}><strong>影响提示</strong>{preview.warnings.map(warning => <p key={warning}>{warning}</p>)}</div>}
                 <label className={styles.confirmField}><span>输入 <code>{preview.endpoint}</code> 确认</span><input autoFocus autoComplete="off" disabled={busy} onChange={event => setConfirmation(event.target.value)} value={confirmation} /></label>
@@ -168,7 +138,7 @@ function AgentDiagnosticsView({ agent, diagnostics } : { agent: AgentManagementS
 
     return (
         <section className={styles.detailSection}>
-            <div className={styles.sectionHeading}><div><h3>连接诊断与能力</h3><p>{diagnostics ? `诊断生成于 ${formatTime(diagnostics.generatedAt)}` : "运行诊断后可读取 Docker、Compose 与主机信息。"}</p></div></div>
+            <div className={styles.sectionHeading}><div><h3>连接诊断与能力</h3><p>{diagnostics ? `诊断生成于 ${formatTime(diagnostics.generatedAt, "从未")}` : "运行诊断后可读取 Docker、Compose 与主机信息。"}</p></div></div>
             <dl className={styles.factGrid}>
                 <div><dt>Agent 版本</dt><dd>{diagnostics?.version || agent.runtimeInfo?.version || "未知"}</dd></div>
                 <div><dt>协议版本</dt><dd>{diagnostics?.protocolVersion || agent.runtimeInfo?.protocolVersion || "未知"}</dd></div>
@@ -415,11 +385,11 @@ export function AgentsPage() {
             {feedback && <Notice className={styles.feedback}>{feedback}</Notice>}
             <div className={styles.workspace}>
                 <Panel className={styles.listPanel} flush>
-                    <div className={styles.panelHeading}><div><h3>节点清单</h3><p>{snapshot ? `清单生成于 ${formatTime(snapshot.generatedAt)}` : "正在读取控制器登记信息"}</p></div><span>{snapshot?.credentialEncryption.algorithm || "AES-256-GCM"}</span></div>
-                    {loading ? <SkeletonRows rows={5} /> : agents.length === 0 ? <EmptyState action={<Button variant="primary" onClick={() => setEnrollmentOpen(true)}>注册第一个 Agent</Button>} description="添加远程 DockerBridge 实例后，可在同一控制器中管理多个 Docker 节点。" title="尚未注册远程 Agent" /> : <div className={pageStyles.tableScroller}><table className={`${pageStyles.table} ${styles.agentTable}`}><thead><tr><th>节点</th><th>连接</th><th>兼容性</th><th className={pageStyles.mobileOptional}>版本</th><th className={pageStyles.mobileOptional}>最后在线</th><th aria-label="管理" /></tr></thead><tbody>{agents.map(agent => <tr className={agent.endpoint === selectedEndpoint ? styles.selectedRow : ""} key={agent.endpoint}><td><button aria-controls="agent-detail" aria-pressed={agent.endpoint === selectedEndpoint} className={styles.agentIdentity} onClick={() => setSelectedEndpoint(agent.endpoint)} type="button"><strong>{agent.name || agent.endpoint}</strong><small>{agent.endpoint}</small></button></td><td><StatusBadge label={agent.active ? statusLabel(agent.status.status) : "已停用"} status={agent.active ? agent.status.status : "offline"} /></td><td><StatusBadge label={compatibilityLabel(agent.compatibility)} status={compatibilityStatus(agent.compatibility)} /></td><td className={`${pageStyles.mono} ${pageStyles.mobileOptional}`}>{agent.runtimeInfo?.version || "未知"}</td><td className={`${styles.timeCell} ${pageStyles.mobileOptional}`}>{formatTime(agent.status.lastSeenAt)}</td><td><div className={pageStyles.rowActions}><Button aria-controls="agent-detail" aria-label={`管理 ${agent.name || agent.endpoint}`} aria-pressed={agent.endpoint === selectedEndpoint} size="compact" variant={agent.endpoint === selectedEndpoint ? "primary" : "ghost"} onClick={() => setSelectedEndpoint(agent.endpoint)}>管理</Button></div></td></tr>)}</tbody></table></div>}
+                    <div className={styles.panelHeading}><div><h3>节点清单</h3><p>{snapshot ? `清单生成于 ${formatTime(snapshot.generatedAt, "从未")}` : "正在读取控制器登记信息"}</p></div><span>{snapshot?.credentialEncryption.algorithm || "AES-256-GCM"}</span></div>
+                    {loading ? <SkeletonRows rows={5} /> : agents.length === 0 ? <EmptyState action={<Button variant="primary" onClick={() => setEnrollmentOpen(true)}>注册第一个 Agent</Button>} description="添加远程 DockerBridge 实例后，可在同一控制器中管理多个 Docker 节点。" title="尚未注册远程 Agent" /> : <div className={pageStyles.tableScroller}><table className={`${pageStyles.table} ${styles.agentTable}`}><thead><tr><th>节点</th><th>连接</th><th>兼容性</th><th className={pageStyles.mobileOptional}>版本</th><th className={pageStyles.mobileOptional}>最后在线</th><th aria-label="管理" /></tr></thead><tbody>{agents.map(agent => <tr className={agent.endpoint === selectedEndpoint ? styles.selectedRow : ""} key={agent.endpoint}><td><button aria-controls="agent-detail" aria-pressed={agent.endpoint === selectedEndpoint} className={styles.agentIdentity} onClick={() => setSelectedEndpoint(agent.endpoint)} type="button"><strong>{agent.name || agent.endpoint}</strong><small>{agent.endpoint}</small></button></td><td><StatusBadge label={agent.active ? statusLabel(agent.status.status) : "已停用"} status={agent.active ? agent.status.status : "offline"} /></td><td><StatusBadge label={compatibilityLabel(agent.compatibility)} status={compatibilityStatus(agent.compatibility)} /></td><td className={`${pageStyles.mono} ${pageStyles.mobileOptional}`}>{agent.runtimeInfo?.version || "未知"}</td><td className={`${styles.timeCell} ${pageStyles.mobileOptional}`}>{formatTime(agent.status.lastSeenAt, "从未")}</td><td><div className={pageStyles.rowActions}><Button aria-controls="agent-detail" aria-label={`管理 ${agent.name || agent.endpoint}`} aria-pressed={agent.endpoint === selectedEndpoint} size="compact" variant={agent.endpoint === selectedEndpoint ? "primary" : "ghost"} onClick={() => setSelectedEndpoint(agent.endpoint)}>管理</Button></div></td></tr>)}</tbody></table></div>}
                 </Panel>
                 <Panel className={styles.detailPanel} flush id="agent-detail">
-                    {!selected ? <EmptyState description="从节点清单中选择一个 Agent，查看连接、版本、能力和凭据状态。" title="选择 Agent" /> : <><div className={styles.detailHeader}><div><span className={styles.statusLine}><StatusBadge label={selected.active ? statusLabel(selected.status.status) : "已停用"} status={selected.active ? selected.status.status : "offline"} /><StatusBadge label={compatibilityLabel(selected.compatibility)} status={compatibilityStatus(selected.compatibility)} /></span><h2>{selected.name}</h2><p>{selected.url}</p></div><div className={styles.detailActions}><Button disabled={!selected.active || selected.status.status !== "online"} loading={actionBusy === "diagnostics"} size="compact" onClick={() => void runDiagnostics()}><Icon name="activity" size={14} />运行诊断</Button><Button loading={actionBusy === "preview-remove"} size="compact" variant="danger" onClick={() => void prepareRemoval()}><Icon name="delete" size={14} />移除</Button></div></div><div className={styles.detailBody}><section className={styles.detailSection}><div className={styles.sectionHeading}><div><h3>登记与连接策略</h3><p>停用后控制器会断开连接，但不会修改远程节点。</p></div></div><form className={styles.inlineForm} onSubmit={saveAgent}><label><span>显示名称</span><input maxLength={128} onChange={event => setEditName(event.target.value)} value={editName} /></label><label className={styles.toggleField}><input checked={editActive} onChange={event => setEditActive(event.target.checked)} type="checkbox" /><span><strong>允许控制器连接此 Agent</strong><small>{editActive ? "保存后保持或重新建立连接" : "保存后断开并标记为停用"}</small></span></label><dl className={styles.credentialFacts}><div><dt>端点</dt><dd>{selected.endpoint}</dd></div><div><dt>登录账户</dt><dd>{selected.username}</dd></div><div><dt>凭据版本</dt><dd>{selected.credentialVersion}</dd></div><div><dt>加密状态</dt><dd>{selected.credentialEncrypted ? "已加密" : "待迁移"}</dd></div><div><dt>创建时间</dt><dd>{formatTime(selected.createdAt)}</dd></div><div><dt>更新时间</dt><dd>{formatTime(selected.updatedAt)}</dd></div></dl>{selected.status.msg && <Notice className={styles.inlineNotice} tone={selected.status.status === "offline" ? "warning" : "default"}>{selected.status.msg}</Notice>}<div className={styles.formActions}><Button disabled={!editName.trim() || actionBusy === "credentials"} loading={actionBusy === "save"} variant="primary" type="submit"><Icon name="save" size={15} />保存节点设置</Button></div></form></section><section className={styles.detailSection}><div className={styles.sectionHeading}><div><h3>认证凭据轮换</h3><p>新凭据会先通过远程登录验证，验证成功后才替换已保存凭据。</p></div></div><form className={styles.inlineForm} onSubmit={rotateCredentials}><div className={styles.twoColumns}><label><span>登录账户</span><input autoComplete="username" onChange={event => setCredentialUsername(event.target.value)} value={credentialUsername} /></label><label><span>新密码</span><input autoComplete="new-password" onChange={event => setCredentialPassword(event.target.value)} placeholder="输入新密码" type="password" value={credentialPassword} /></label></div><div className={styles.formActions}><Button disabled={!credentialUsername.trim() || !credentialPassword || actionBusy === "save"} loading={actionBusy === "credentials"} type="submit"><Icon name="restart" size={15} />验证并轮换</Button></div></form></section><AgentDiagnosticsView agent={selected} diagnostics={diagnostics[selected.endpoint]} /></div></>}
+                    {!selected ? <EmptyState description="从节点清单中选择一个 Agent，查看连接、版本、能力和凭据状态。" title="选择 Agent" /> : <><div className={styles.detailHeader}><div><span className={styles.statusLine}><StatusBadge label={selected.active ? statusLabel(selected.status.status) : "已停用"} status={selected.active ? selected.status.status : "offline"} /><StatusBadge label={compatibilityLabel(selected.compatibility)} status={compatibilityStatus(selected.compatibility)} /></span><h2>{selected.name}</h2><p>{selected.url}</p></div><div className={styles.detailActions}><Button disabled={!selected.active || selected.status.status !== "online"} loading={actionBusy === "diagnostics"} size="compact" onClick={() => void runDiagnostics()}><Icon name="activity" size={14} />运行诊断</Button><Button loading={actionBusy === "preview-remove"} size="compact" variant="danger" onClick={() => void prepareRemoval()}><Icon name="delete" size={14} />移除</Button></div></div><div className={styles.detailBody}><section className={styles.detailSection}><div className={styles.sectionHeading}><div><h3>登记与连接策略</h3><p>停用后控制器会断开连接，但不会修改远程节点。</p></div></div><form className={styles.inlineForm} onSubmit={saveAgent}><label><span>显示名称</span><input maxLength={128} onChange={event => setEditName(event.target.value)} value={editName} /></label><label className={styles.toggleField}><input checked={editActive} onChange={event => setEditActive(event.target.checked)} type="checkbox" /><span><strong>允许控制器连接此 Agent</strong><small>{editActive ? "保存后保持或重新建立连接" : "保存后断开并标记为停用"}</small></span></label><dl className={styles.credentialFacts}><div><dt>端点</dt><dd>{selected.endpoint}</dd></div><div><dt>登录账户</dt><dd>{selected.username}</dd></div><div><dt>凭据版本</dt><dd>{selected.credentialVersion}</dd></div><div><dt>加密状态</dt><dd>{selected.credentialEncrypted ? "已加密" : "待迁移"}</dd></div><div><dt>创建时间</dt><dd>{formatTime(selected.createdAt, "从未")}</dd></div><div><dt>更新时间</dt><dd>{formatTime(selected.updatedAt, "从未")}</dd></div></dl>{selected.status.msg && <Notice className={styles.inlineNotice} tone={selected.status.status === "offline" ? "warning" : "default"}>{selected.status.msg}</Notice>}<div className={styles.formActions}><Button disabled={!editName.trim() || actionBusy === "credentials"} loading={actionBusy === "save"} variant="primary" type="submit"><Icon name="save" size={15} />保存节点设置</Button></div></form></section><section className={styles.detailSection}><div className={styles.sectionHeading}><div><h3>认证凭据轮换</h3><p>新凭据会先通过远程登录验证，验证成功后才替换已保存凭据。</p></div></div><form className={styles.inlineForm} onSubmit={rotateCredentials}><div className={styles.twoColumns}><label><span>登录账户</span><input autoComplete="username" onChange={event => setCredentialUsername(event.target.value)} value={credentialUsername} /></label><label><span>新密码</span><input autoComplete="new-password" onChange={event => setCredentialPassword(event.target.value)} placeholder="输入新密码" type="password" value={credentialPassword} /></label></div><div className={styles.formActions}><Button disabled={!credentialUsername.trim() || !credentialPassword || actionBusy === "save"} loading={actionBusy === "credentials"} type="submit"><Icon name="restart" size={15} />验证并轮换</Button></div></form></section><AgentDiagnosticsView agent={selected} diagnostics={diagnostics[selected.endpoint]} /></div></>}
                 </Panel>
             </div>
             <EnrollmentDialog busy={candidateBusy} candidate={candidate} onAdd={() => void enrollAgent()} onChange={value => {

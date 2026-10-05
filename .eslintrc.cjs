@@ -7,9 +7,8 @@ module.exports = {
     extends: [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
-        "plugin:vue/vue3-recommended",
     ],
-    parser: "vue-eslint-parser",
+    parser: "@typescript-eslint/parser",
     parserOptions: {
         "parser": "@typescript-eslint/parser",
     },
@@ -37,13 +36,6 @@ module.exports = {
         ],
         quotes: [ "error", "double" ],
         semi: "error",
-        "vue/html-indent": [ "error", 4 ], // default: 2
-        "vue/max-attributes-per-line": "off",
-        "vue/singleline-html-element-content-newline": "off",
-        "vue/html-self-closing": "off",
-        "vue/require-component-is": "off",      // not allow is="style" https://github.com/vuejs/eslint-plugin-vue/issues/462#issuecomment-430234675
-        "vue/attribute-hyphenation": "off",     // This change noNL to "no-n-l" unexpectedly
-        "vue/multi-word-component-names": "off",
         "no-multi-spaces": [ "error", {
             ignoreEOLComments: true,
         }],
