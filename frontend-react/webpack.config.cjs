@@ -19,6 +19,13 @@ module.exports = (_environment, argv) => {
             clean: true,
             publicPath: "/",
         },
+        // 产物由 express-static-gzip 提供 gzip/brotli 预压缩(主包约 84KB br),
+        // 阈值按压缩后的实际传输量折算,未压缩字节的默认 244KB 警告不反映真实加载成本。
+        performance: {
+            hints: "warning",
+            maxEntrypointSize: 640 * 1024,
+            maxAssetSize: 400 * 1024,
+        },
         devtool: production ? "source-map" : "eval-cheap-module-source-map",
         devServer: {
             historyApiFallback: true,
