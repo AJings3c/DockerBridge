@@ -341,8 +341,21 @@ export class ComposeEditor {
                 timer.unref?.();
             });
         } finally {
-            await fsAsync.rm(directory, { recursive: true,
-                force: true });
+            // Windows releases directory handles shortly after the child exits;
+            // a single rm can hit EBUSY while the child or a scanner still holds one.
+            for (let attempt = 0; ; attempt++) {
+                try {
+                    await fsAsync.rm(directory, { recursive: true,
+                        force: true });
+                    break;
+                } catch (error) {
+                    const code = (error as NodeJS.ErrnoException).code;
+                    if (attempt >= 4 || !code || ![ "EBUSY", "EPERM", "ENOTEMPTY", "ENOENT" ].includes(code)) {
+                        throw error;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
+                }
+            }
         }
     }
 
