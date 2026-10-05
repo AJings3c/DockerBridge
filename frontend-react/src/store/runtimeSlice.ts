@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { DockerSnapshot, EndpointConnectionStatus, EndpointSummary, StackSummary } from "@/types/domain";
+import { ContainerMetricsSample, DockerSnapshot, EndpointConnectionStatus, EndpointSummary, HostMetricsSample, StackSummary } from "@/types/domain";
 
 interface RuntimeState {
     stacks: Record<string, StackSummary>;
@@ -9,6 +9,15 @@ interface RuntimeState {
     snapshot?: DockerSnapshot;
     loadingSnapshot: boolean;
     snapshotError: string;
+    metricsHost: HostMetricsSample[];
+    metricsContainers: Record<string, ContainerMetricsSample[]>;
+}
+
+const METRICS_CAP = 180;
+
+interface MetricsSamplePayload {
+    hostSample: HostMetricsSample;
+    containerSamples: Record<string, ContainerMetricsSample>;
 }
 
 interface StackListPayload {
@@ -52,6 +61,8 @@ const initialState : RuntimeState = {
     stackSyncedAt: {},
     loadingSnapshot: false,
     snapshotError: "",
+    metricsHost: [],
+    metricsContainers: {},
 };
 
 const runtimeSlice = createSlice({
@@ -141,6 +152,25 @@ const runtimeSlice = createSlice({
             state.loadingSnapshot = false;
             state.snapshotError = action.payload;
         },
+        metricsHistoryReceived(state, action : PayloadAction<{ host: HostMetricsSample[]; containers: Record<string, ContainerMetricsSample[]> }>) {
+            state.metricsHost = action.payload.host.slice(-METRICS_CAP);
+            state.metricsContainers = Object.fromEntries(
+                Object.entries(action.payload.containers).map(([ name, series ]) => [ name, series.slice(-METRICS_CAP) ]));
+        },
+        metricsSampleReceived(state, action : PayloadAction<MetricsSamplePayload>) {
+            state.metricsHost.push(action.payload.hostSample);
+            if (state.metricsHost.length > METRICS_CAP) {
+                state.metricsHost.splice(0, state.metricsHost.length - METRICS_CAP);
+            }
+            for (const [ name, sample ] of Object.entries(action.payload.containerSamples)) {
+                const series = state.metricsContainers[name] || [];
+                series.push(sample);
+                if (series.length > METRICS_CAP) {
+                    series.splice(0, series.length - METRICS_CAP);
+                }
+                state.metricsContainers[name] = series;
+            }
+        },
         runtimeCleared() {
             return initialState;
         },
@@ -155,6 +185,8 @@ export const {
     snapshotFailed,
     snapshotLoading,
     snapshotReceived,
+    metricsHistoryReceived,
+    metricsSampleReceived,
     stackListReceived,
     stackSyncFailed,
     stackStatusesReceived,

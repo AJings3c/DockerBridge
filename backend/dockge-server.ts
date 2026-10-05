@@ -1,4 +1,5 @@
 import "dotenv/config";
+import os from "node:os";
 import { MainRouter } from "./routers/main-router";
 import * as fs from "node:fs";
 import { PackageJson } from "type-fest";
@@ -31,6 +32,7 @@ import gracefulShutdown from "http-graceful-shutdown";
 import User from "./models/user";
 import childProcessAsync from "promisify-child-process";
 import { AgentManager } from "./agent-manager";
+import { ContainerMetricsSample, HostMetricsSample, MetricsHistory } from "./metrics-history";
 import { AgentProxySocketHandler } from "./socket-handlers/agent-proxy-socket-handler";
 import { AgentSocketHandler } from "./agent-socket-handler";
 import { AgentSocket } from "../common/agent-socket";
@@ -85,6 +87,10 @@ export class DockgeServer {
     jwtSecret : string = "";
 
     stacksDir : string = "";
+
+    metricsHistory = new MetricsHistory();
+
+    private engineInfoCache : { at : number; data : Record<string, unknown> } | null = null;
 
     /**
      *
@@ -451,6 +457,28 @@ export class DockgeServer {
                 this.sendStackList(true);
             });
 
+            // Sample host and container metrics every 10 seconds and push the
+            // latest points; clients keep their own ring buffer for charts.
+            Cron("*/10 * * * * *", {
+                protect: true,
+            }, async () => {
+                try {
+                    const now = Date.now();
+                    const hostSample = this.metricsHistory.recordHost(now);
+                    const containerSamples : Record<string, ContainerMetricsSample> = {};
+                    for (const [ name, stat ] of await this.getDockerStats()) {
+                        containerSamples[name] = this.metricsHistory.recordContainer(name, stat as Record<string, unknown>, now);
+                    }
+                    this.metricsHistory.retainContainers(Object.keys(containerSamples));
+                    this.io.emit("dockerBridgeMetrics", {
+                        hostSample,
+                        containerSamples,
+                    });
+                } catch (e) {
+                    log.error("metrics", e);
+                }
+            });
+
             checkVersion.startInterval();
         });
 
@@ -730,6 +758,38 @@ export class DockgeServer {
         } catch (e) {
             log.error("getDockerStats", e);
             return stats;
+        }
+    }
+
+    /**
+     * Engine and host facts for the dashboard, cached for five minutes.
+     */
+    async getEngineInfo() : Promise<Record<string, unknown>> {
+        if (this.engineInfoCache && Date.now() - this.engineInfoCache.at < 5 * 60 * 1000) {
+            return this.engineInfoCache.data;
+        }
+        try {
+            const version = JSON.parse((await childProcessAsync.spawn("docker", [ "version", "--format", "json" ], { encoding: "utf-8" })).stdout?.toString() || "{}");
+            const info = JSON.parse((await childProcessAsync.spawn("docker", [ "info", "--format", "json" ], { encoding: "utf-8" })).stdout?.toString() || "{}");
+            const data = {
+                clientVersion: version.Client?.Version || "",
+                serverVersion: version.Server?.Version || "",
+                apiVersion: version.Server?.ApiVersion || "",
+                operatingSystem: info.OperatingSystem || "",
+                osType: info.OSType || "",
+                osVersion: info.OSVersion || "",
+                kernelVersion: info.KernelVersion || "",
+                architecture: info.Architecture || os.arch(),
+                cpus: info.NCPU || os.cpus().length,
+                totalMemoryBytes: info.MemTotal || os.totalmem(),
+                storageDriver: info.Driver || "",
+                dockerRootDir: info.DockerRootDir || "",
+            };
+            this.engineInfoCache = { at: Date.now(),
+                data };
+            return data;
+        } catch (e) {
+            return {};
         }
     }
 

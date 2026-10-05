@@ -466,6 +466,55 @@ export interface ImagePruneResponse extends ApiResponse {
     output: string;
 }
 
+export interface HostMetricsSample {
+    t: number;
+    cpuPercent: number;
+    memoryPercent: number;
+    memoryUsedBytes: number;
+    memoryTotalBytes: number;
+    netRxBytesPerSec: number;
+    netTxBytesPerSec: number;
+}
+
+export interface ContainerMetricsSample {
+    t: number;
+    cpuPercent: number;
+    memoryPercent: number;
+    memoryUsedBytes: number;
+    netRxBytesPerSec: number;
+    netTxBytesPerSec: number;
+    blockReadBytesPerSec: number;
+    blockWriteBytesPerSec: number;
+}
+
+export interface DockerEngineInfo {
+    clientVersion?: string;
+    serverVersion?: string;
+    apiVersion?: string;
+    operatingSystem?: string;
+    osType?: string;
+    osVersion?: string;
+    kernelVersion?: string;
+    architecture?: string;
+    cpus?: number;
+    totalMemoryBytes?: number;
+    storageDriver?: string;
+    dockerRootDir?: string;
+}
+
+export interface MetricsHistoryResponse {
+    ok: boolean;
+    host: HostMetricsSample[];
+    containers: Record<string, ContainerMetricsSample[]>;
+    generatedAt: string;
+}
+
+export interface ContainerMetricsResponse {
+    ok: boolean;
+    name: string;
+    series: ContainerMetricsSample[];
+}
+
 export interface DockerSnapshot {
     ok: boolean;
     dockerAvailable: boolean;
@@ -482,6 +531,16 @@ export interface DockerSnapshot {
         restarting: number;
         imageTotal: number;
         disk: Array<Record<string, unknown>>;
+        engine?: DockerEngineInfo;
+        host?: {
+            hostname: string;
+            platform: string;
+            release: string;
+            arch: string;
+            uptimeSeconds: number;
+            cpuCount: number;
+            totalMemoryBytes: number;
+        };
     };
     containers: DockerContainer[];
     images: DockerImage[];

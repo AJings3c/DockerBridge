@@ -8,8 +8,8 @@ import {
     sessionReady,
     setupRequired,
 } from "@/store/sessionSlice";
-import { endpointListReceived, endpointsDisconnected, endpointStatusReceived, runtimeCleared, stackListReceived, stackStatusesReceived, stackSyncFailed } from "@/store/runtimeSlice";
-import { ApiResponse, EndpointConnectionStatus, StackSummary, UserPermission, UserRole } from "@/types/domain";
+import { endpointListReceived, endpointsDisconnected, endpointStatusReceived, metricsHistoryReceived, metricsSampleReceived, runtimeCleared, stackListReceived, stackStatusesReceived, stackSyncFailed } from "@/store/runtimeSlice";
+import { ApiResponse, ContainerMetricsSample, EndpointConnectionStatus, HostMetricsSample, MetricsHistoryResponse, StackSummary, UserPermission, UserRole } from "@/types/domain";
 import { emitWithAck, realtime } from "./realtime/client";
 
 interface JwtPayload {
@@ -64,6 +64,21 @@ export function initializeSession() {
             permissions: [ "read", "operate", "destructive", "terminal", "settings", "users", "agents", "admin" ] }));
     });
     realtime.on("info", (info : unknown) => store.dispatch(infoReceived(info as Record<string, unknown>)));
+    realtime.on("dockerBridgeMetrics", (payload : unknown) => {
+        const data = payload as { hostSample?: HostMetricsSample; containerSamples?: Record<string, ContainerMetricsSample> };
+        if (data?.hostSample) {
+            store.dispatch(metricsSampleReceived({ hostSample: data.hostSample,
+                containerSamples: data.containerSamples || {} }));
+        }
+    });
+    realtime.on("connect", () => {
+        void emitWithAck<MetricsHistoryResponse>("getDockerBridgeMetricsHistory").then(response => {
+            if (response.ok) {
+                store.dispatch(metricsHistoryReceived({ host: response.host,
+                    containers: response.containers }));
+            }
+        }).catch(() => {});
+    });
     realtime.on("stackStatusList", (response : unknown) => {
         const data = response as { ok: boolean; stackStatusList: Record<string, number>; endpoint?: string };
         if (data.ok) {

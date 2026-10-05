@@ -1,0 +1,61 @@
+.chart {
+    min-width: 0;
+}
+
+.chartHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.chartLabel {
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.chartValue {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.chartValueDanger {
+    color: var(--danger);
+}
+
+.chartSvg {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.chartLine {
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.chartWarnLine {
+    stroke: var(--danger);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    opacity: 0.55;
+}
+
+.chartFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+}

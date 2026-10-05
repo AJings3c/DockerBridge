@@ -1,3 +1,4 @@
+export { LineChart } from "./LineChart";
 export { FailureDialog } from "./FailureDialog";
 export type { FailureDialogDetail } from "./FailureDialog";
 export { MetricStrip } from "./MetricStrip";

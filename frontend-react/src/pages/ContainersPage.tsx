@@ -4,7 +4,7 @@ import { Button } from "@/components/primitives/Button";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { StatusBadge } from "@/components/primitives/StatusBadge";
 import { Icon } from "@/components/Icon";
-import { FailureDialog, Notice, PageHeader, Panel, SearchField, SegmentedControl, Toolbar, useModalDialog } from "@/components/ui";
+import { FailureDialog, LineChart, Notice, PageHeader, Panel, SearchField, SegmentedControl, Toolbar, useModalDialog } from "@/components/ui";
 import { cleanContainerCache, containerAction, imageAction, onImagePullProgress, preflightHostPort, previewContainerCache, previewImagePrune, pruneImages, queryContainerLogs, refreshSnapshot, rollbackHostPort, tagImage, updateHostPort } from "@/services/runtime";
 import { formatBytes, formatTime } from "@/services/format";
 import { useAppSelector } from "@/store/hooks";
@@ -43,8 +43,9 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
     const permissions = useAppSelector(state => state.session.permissions);
     const navigate = useNavigate();
     const canDestructive = permissions.includes("destructive");
+    const metricsSeries = useAppSelector(state => state.runtime.metricsContainers[container.name]);
     const dialogRef = useModalDialog();
-    const [ section, setSection ] = useState<"overview" | "logs" | "cache">("overview");
+    const [ section, setSection ] = useState<"overview" | "metrics" | "logs" | "cache">("overview");
     const [ tail, setTail ] = useState(300);
     const [ logs, setLogs ] = useState("");
     const [ loadingLogs, setLoadingLogs ] = useState(false);
@@ -216,6 +217,7 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                 </header>
                 <div className={detailStyles.tabs}>
                     <Button aria-pressed={section === "overview"} size="compact" variant={section === "overview" ? "primary" : "ghost"} onClick={() => setSection("overview")}>运行详情</Button>
+                    <Button aria-pressed={section === "metrics"} size="compact" variant={section === "metrics" ? "primary" : "ghost"} onClick={() => setSection("metrics")}>资源曲线</Button>
                     <Button aria-pressed={section === "logs"} size="compact" variant={section === "logs" ? "primary" : "ghost"} onClick={() => setSection("logs")}>最近日志</Button>
                     <Button aria-pressed={section === "cache"} disabled={!canDestructive} size="compact" title={!canDestructive ? "仅管理员可清理缓存" : undefined} variant={section === "cache" ? "primary" : "ghost"} onClick={() => setSection("cache")}>缓存清理 {container.cacheDirs.length > 0 ? container.cacheDirs.length : ""}</Button>
                 </div>
@@ -241,6 +243,13 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                         <section><h3>网络</h3>{container.networks.length === 0 ? <p className={detailStyles.emptyCopy}>没有加入网络。</p> : <table><thead><tr><th>名称</th><th>地址</th></tr></thead><tbody>{container.networks.map(network => <tr key={network.name}><td><Button size="compact" variant="ghost" onClick={() => navigate(`/resources?tab=networks&resource=${encodeURIComponent(network.name)}&endpoint=local`)}>{network.name}</Button></td><td>{network.ipAddress || "—"}</td></tr>)}</tbody></table>}</section>
                     </div>
                     <section className={detailStyles.mounts}><h3>挂载</h3>{container.mounts.length === 0 ? <p className={detailStyles.emptyCopy}>没有挂载卷或目录。</p> : <table><thead><tr><th>类型</th><th>来源</th><th>容器路径</th><th>缓存声明</th></tr></thead><tbody>{container.mounts.map((mount, index) => <tr key={`${mount.destination}-${index}`}><td>{mount.type}</td><td title={mount.source}>{mount.type === "volume" && mount.name ? <Button size="compact" variant="ghost" onClick={() => navigate(`/resources?tab=volumes&resource=${encodeURIComponent(mount.name)}&endpoint=local`)}>{mount.name}</Button> : mount.name || mount.source || "—"}</td><td>{mount.destination}</td><td>{mount.cache ? <StatusBadge label="可清理缓存" status="created" /> : "—"}</td></tr>)}</tbody></table>}</section>
+                </div> : section === "metrics" ? <div className={detailStyles.body}>
+                    {(metricsSeries?.length || 0) < 2 ? <EmptyState title="采样积累中" description="容器指标每 10 秒采样一次，打开本页稍等片刻即可看到最近 30 分钟的曲线。" /> : <div className={detailStyles.metricsGrid}>
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.cpuPercent }))} label="CPU" unit="%" maxY={100} warnAbove={85} height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.memoryPercent }))} label="内存" unit="%" maxY={100} warnAbove={90} height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.netRxBytesPerSec + item.netTxBytesPerSec }))} label="网络速率" unit="bytes/s" height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.blockReadBytesPerSec + item.blockWriteBytesPerSec }))} label="磁盘 I/O 速率" unit="bytes/s" height={90} />
+                    </div>}
                 </div> : section === "logs" ? <div className={detailStyles.logsBody}>
                     <div className={detailStyles.logToolbar}><label>最近<select onChange={event => setTail(Number(event.target.value))} value={tail}><option value={100}>100 行</option><option value={300}>300 行</option><option value={1000}>1000 行</option><option value={5000}>5000 行</option></select></label><Button loading={loadingLogs} size="compact" onClick={() => void refreshLogs()}><Icon name="refresh" size={14} />刷新日志</Button></div>
                     {logError && <Notice tone="error">{logError}</Notice>}

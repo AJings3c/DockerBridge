@@ -5,15 +5,17 @@ import { EmptyState } from "@/components/primitives/EmptyState";
 import { ProgressBar } from "@/components/primitives/ProgressBar";
 import { StatusBadge } from "@/components/primitives/StatusBadge";
 import { Icon } from "@/components/Icon";
-import { Notice, PageHeader, Panel, PanelHeader } from "@/components/ui";
+import { LineChart, Notice, PageHeader, Panel, PanelHeader } from "@/components/ui";
 import { refreshSnapshot } from "@/services/runtime";
+import { formatChartValue } from "@/components/ui/LineChart";
+import { formatBytes, formatUptime } from "@/services/format";
 import { endpointFor, formatLastSeen, isStackStale } from "@/services/endpoints";
 import { useAppSelector } from "@/store/hooks";
 import dashboardStyles from "./DashboardPage.module.css";
 import styles from "./Page.module.css";
 
 export function DashboardPage() {
-    const { snapshot, loadingSnapshot, snapshotError, stacks, endpoints, stackSyncErrors } = useAppSelector(state => state.runtime);
+    const { snapshot, loadingSnapshot, snapshotError, stacks, endpoints, stackSyncErrors, metricsHost } = useAppSelector(state => state.runtime);
     const [ now, setNow ] = useState(Date.now());
 
     useEffect(() => {
@@ -33,6 +35,11 @@ export function DashboardPage() {
     const recentStacks = stackList.slice(0, 8);
     const containerTotal = snapshot?.summary.containerTotal || 0;
     const endpointList = Object.values(endpoints);
+    const diskRows = (snapshot?.summary.disk || []).map(row => ({ type: String(row.Type || ""),
+        count: String(row.TotalCount ?? "—"),
+        active: String(row.Active ?? ""),
+        size: String(row.Size ?? ""),
+        reclaimable: String(row.Reclaimable ?? "") }));
     const stateTitle = !snapshot?.dockerAvailable
         ? "Docker Engine 不可用"
         : abnormalTotal > 0
@@ -71,19 +78,18 @@ export function DashboardPage() {
                         <Icon name="server" size={20} />
                     </div>
                     <div className={dashboardStyles.resourceRows}>
-                        <div className={dashboardStyles.resourceRow}>
-                            <div><span><Icon name="cpu" size={15} />CPU</span><strong>{snapshot?.summary.cpuPercent.toFixed(1) ?? "—"}%</strong></div>
-                            <ProgressBar label="CPU 使用率" value={snapshot?.summary.cpuPercent || 0} />
-                        </div>
-                        <div className={dashboardStyles.resourceRow}>
-                            <div><span><Icon name="memory" size={15} />内存</span><strong>{snapshot?.summary.memoryPercent.toFixed(1) ?? "—"}%</strong></div>
-                            <ProgressBar label="内存使用率" value={snapshot?.summary.memoryPercent || 0} />
-                        </div>
+                        <LineChart points={metricsHost.map(item => ({ t: item.t,
+                            value: item.cpuPercent }))} label="CPU" unit="%" maxY={100} warnAbove={85} height={56} />
+                        <LineChart points={metricsHost.map(item => ({ t: item.t,
+                            value: item.memoryPercent }))} label="内存" unit="%" maxY={100} warnAbove={90} height={56} />
+                        <LineChart points={metricsHost.map(item => ({ t: item.t,
+                            value: item.netRxBytesPerSec + item.netTxBytesPerSec }))} label="容器网络" unit="bytes/s" height={56} />
                     </div>
                     <div className={dashboardStyles.resourceFacts}>
                         <div><span>运行容器</span><strong>{snapshot?.summary.running ?? "—"}<small> / {containerTotal || "—"}</small></strong></div>
                         <div><span>Compose</span><strong>{stackList.length}</strong></div>
                         <div><span>镜像</span><strong>{snapshot?.summary.imageTotal ?? "—"}</strong></div>
+                        <div><span>引擎</span><strong className={dashboardStyles.factMono}>{snapshot?.summary.engine?.serverVersion || "—"}</strong></div>
                     </div>
                 </div>
             </section>
@@ -101,6 +107,20 @@ export function DashboardPage() {
                     )}
                 </Panel>
             </div>
+            <Panel className={dashboardStyles.hostPanel}>
+                <PanelHeader description="引擎版本、宿主机事实与 Docker 磁盘占用" title="宿主与引擎" />
+                <div className={dashboardStyles.factGrid}>
+                    <div className={dashboardStyles.factItem}><span>引擎版本</span><strong>{snapshot?.summary.engine?.serverVersion || "—"}<small>{snapshot?.summary.engine?.apiVersion ? " API " + snapshot.summary.engine.apiVersion : ""}</small></strong></div>
+                    <div className={dashboardStyles.factItem}><span>存储驱动</span><strong>{snapshot?.summary.engine?.storageDriver || "—"}</strong></div>
+                    <div className={dashboardStyles.factItem}><span>操作系统</span><strong className={dashboardStyles.factMono}>{snapshot?.summary.engine?.operatingSystem || snapshot?.summary.host?.platform || "—"}</strong></div>
+                    <div className={dashboardStyles.factItem}><span>内核</span><strong className={dashboardStyles.factMono}>{snapshot?.summary.engine?.kernelVersion || snapshot?.summary.host?.release || "—"}</strong></div>
+                    <div className={dashboardStyles.factItem}><span>架构 / CPU</span><strong>{snapshot?.summary.engine?.architecture || snapshot?.summary.host?.arch || "—"}<small> {snapshot?.summary.engine?.cpus || snapshot?.summary.host?.cpuCount || "?"} 核</small></strong></div>
+                    <div className={dashboardStyles.factItem}><span>宿主运行时长</span><strong>{formatUptime(snapshot?.summary.host?.uptimeSeconds)}</strong></div>
+                    <div className={dashboardStyles.factItem}><span>内存</span><strong>{snapshot?.summary.host ? formatBytes(snapshot.summary.host.totalMemoryBytes, "—") : "—"}</strong></div>
+                    <div className={dashboardStyles.factItem}><span>Docker 根目录</span><strong className={dashboardStyles.factMono}>{snapshot?.summary.engine?.dockerRootDir || "—"}</strong></div>
+                </div>
+                {diskRows.length > 0 && <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>类型</th><th className={styles.mobileOptional}>数量 / 活跃</th><th>占用</th><th>可回收</th></tr></thead><tbody>{diskRows.map(row => <tr key={row.type}><td><div className={styles.primaryCell}><strong>{row.type}</strong><small>{row.active ? `活跃 ${row.active}` : ""}</small></div></td><td className={styles.mobileOptional}>{row.count}</td><td>{row.size}</td><td className={dashboardStyles.reclaimCell}>{row.reclaimable}</td></tr>)}</tbody></table></div>}
+            </Panel>
             <Panel className={dashboardStyles.endpointPanel}>
                 <PanelHeader description="本机与远程 Agent 的实时连接状态；离线节点保留最后一次同步数据但禁止操作。" title="运行节点" />
                 {endpointList.length === 0 ? <EmptyState description="登录后正在读取本机与远程 Agent 清单。" title="等待节点状态" /> : <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>节点</th><th>连接</th><th>项目</th><th className={styles.mobileOptional}>最后在线</th><th className={styles.mobileOptional}>状态说明</th></tr></thead><tbody>{endpointList.map(endpoint => {

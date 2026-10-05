@@ -3,6 +3,7 @@ import { snapshotFailed, snapshotLoading, snapshotReceived } from "@/store/runti
 import { repositoryFailed, repositoryLoading, repositoryReceived } from "@/store/repositorySlice";
 import { AgentDiagnosticsResponse, AgentManagementResponse, AgentRemovalPreviewResponse, AgentTestResponse, ApiResponse, CacheCleanupPreviewResponse, CacheCleanupResponse, ComposeEditorMutationResponse, ComposeEditorPreviewResponse, ComposeEditorResponse, ComposeRepositoryResponse, ComposeRevisionListResponse, ComposeServiceLogsResponse, ComposeStackDetailResponse, ContainerLogsResponse, DockerDaemonConfigForm, DockerDaemonConfigMutationResponse, DockerDaemonConfigPreviewResponse, DockerDaemonConfigResponse, DockerNetworkDisconnectPreviewResponse, DockerPortMutationResponse, DockerPortPreflightResponse, DockerPortRollback, DockerPortUpdatePayload, DockerResourceInventoryResponse, DockerResourceRemovalPreviewResponse, DockerSnapshot, ImagePrunePreviewResponse, ImagePruneResponse, ImagePullProgress, OperationLogExportResponse, OperationLogResponse, SystemBackupListResponse, SystemRestorePreviewResponse, SystemRestoreResponse, UserListResponse, UserRole } from "@/types/domain";
 import { emitAgentWithAck, emitWithAck, emitWithAckTimeout, realtime } from "./realtime/client";
+import { MetricsHistoryResponse } from "@/types/domain";
 
 export async function refreshSnapshot() {
     store.dispatch(snapshotLoading());
@@ -13,6 +14,10 @@ export async function refreshSnapshot() {
         store.dispatch(snapshotFailed((response as unknown as ApiResponse).msg || "无法读取 Docker 运行状态"));
     }
     return response;
+}
+
+export function fetchMetricsHistory() {
+    return emitWithAck<MetricsHistoryResponse>("getDockerBridgeMetricsHistory");
 }
 
 export async function containerAction(containerId : string, action : "start" | "stop" | "restart" | "recreate") {

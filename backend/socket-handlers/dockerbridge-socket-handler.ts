@@ -191,6 +191,16 @@ interface DockerBridgeSnapshot {
         restarting: number;
         imageTotal: number;
         disk: DockerJSON[];
+        engine: Record<string, unknown>;
+        host: {
+            hostname: string;
+            platform: string;
+            release: string;
+            arch: string;
+            uptimeSeconds: number;
+            cpuCount: number;
+            totalMemoryBytes: number;
+        };
     };
     containers: DockerBridgeContainer[];
     images: DockerBridgeImage[];
@@ -274,6 +284,21 @@ export class DockerBridgeSocketHandler extends SocketHandler {
                 callbackError(e, callback);
             }
         });
+
+        socket.on("getDockerBridgeMetricsHistory", async (callback) => {
+            try {
+                checkPermission(socket, "read");
+                callbackResult({
+                    ok: true,
+                    host: server.metricsHistory.hostSeries(),
+                    containers: Object.fromEntries(server.metricsHistory.containerNames().map(name => [ name, server.metricsHistory.containerSeries(name) ])),
+                    generatedAt: new Date().toISOString(),
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
 
         socket.on("dockerBridgeContainerAction", async (containerId : unknown, action : unknown, callback) => {
             const startedAt = Date.now();
@@ -1038,7 +1063,7 @@ export class DockerBridgeSocketHandler extends SocketHandler {
             dockerAvailable,
             generatedAt: new Date().toISOString(),
             summary: {
-                cpuPercent: this.getHostCPUPercent(),
+                cpuPercent: server.metricsHistory.hostSeries(1)[0]?.cpuPercent ?? this.getHostCPUPercent(),
                 memoryTotal,
                 memoryUsed,
                 memoryPercent: Math.round((memoryUsed / memoryTotal) * 1000) / 10,
@@ -1049,6 +1074,16 @@ export class DockerBridgeSocketHandler extends SocketHandler {
                 restarting,
                 imageTotal: images.length,
                 disk,
+                engine: await server.getEngineInfo(),
+                host: {
+                    hostname: os.hostname(),
+                    platform: os.platform(),
+                    release: os.release(),
+                    arch: os.arch(),
+                    uptimeSeconds: Math.round(os.uptime()),
+                    cpuCount: os.cpus().length,
+                    totalMemoryBytes: os.totalmem(),
+                },
             },
             containers,
             images,
