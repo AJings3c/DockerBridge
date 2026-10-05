@@ -1,24 +1,29 @@
+/* 集装箱铭牌:方角状态牌,等宽大写,前方方块标记 */
 .badge {
     display: inline-flex;
-    min-height: 25px;
+    min-height: 23px;
     align-items: center;
-    gap: 7px;
-    padding: 2px 9px;
-    border: 1px solid color-mix(in srgb, var(--tone), transparent 58%);
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--tone), transparent 90%);
-    color: color-mix(in srgb, var(--tone), var(--ink) 12%);
-    font-size: 12px;
+    gap: 6px;
+    padding: 2px 7px;
+    border: 1px solid color-mix(in srgb, var(--tone), transparent 52%);
+    border-radius: var(--radius-xs);
+    background: color-mix(in srgb, var(--tone), transparent 91%);
+    color: color-mix(in srgb, var(--tone), var(--ink) 16%);
+    font-family: var(--font-mono);
+    font-size: 11px;
     font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
     transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out);
 }
 
 .badge::before {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     flex: 0 0 auto;
-    border-radius: 50%;
+    border-radius: 1px;
     background: currentColor;
     content: "";
 }

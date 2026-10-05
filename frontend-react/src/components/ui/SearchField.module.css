@@ -1,22 +1,21 @@
 .field {
     display: flex;
     width: min(100%, 360px);
-    min-height: 40px;
+    min-height: 38px;
     align-items: center;
     gap: 9px;
     padding: 0 12px;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
-    background: var(--material-control);
+    background: var(--bg-surface-raised);
     color: var(--ink-muted);
-    box-shadow: var(--shadow-control);
     transition: border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .field:focus-within {
     border-color: var(--focus);
     background: var(--bg-surface-raised);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus), transparent 84%), var(--shadow-control);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus), transparent 84%);
 }
 
 .field input {

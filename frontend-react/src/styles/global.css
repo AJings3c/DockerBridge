@@ -1,6 +1,9 @@
 @import "normalize.css";
 @import "tailwindcss";
+@import "@fontsource-variable/archivo";
 @import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
+@import "@fontsource/jetbrains-mono/latin-700.css";
 @import "./tokens.css";
 
 * {
@@ -118,6 +121,16 @@ dialog::backdrop {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* 集装箱铭牌:机器数据区域(状态、编号、指标)的微标签语言 */
+.stencil-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {

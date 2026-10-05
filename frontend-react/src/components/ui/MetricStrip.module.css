@@ -7,14 +7,34 @@
 
 .metric {
     min-width: 0;
-    padding: 16px 18px 17px;
+    padding: 15px 18px 16px;
     border-right: 1px solid var(--border-subtle);
 }
 
 .metric:last-child { border-right: 0; }
-.metric span { display: block; color: var(--ink-muted); font-size: 11px; font-weight: 500; }
-.metric strong { display: block; margin-top: 5px; font-family: var(--font-mono); font-size: 24px; font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: 0; }
-.danger { background: color-mix(in oklch, var(--danger), transparent 94%); }
+
+/* 机器数据:铭牌微标签 + 等宽大数 */
+.metric span {
+    display: block;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 23px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.danger { background: color-mix(in oklch, var(--danger), transparent 95%); }
 .danger strong { color: var(--danger); }
 .warning { background: color-mix(in oklch, var(--warning), transparent 95%); }
 .warning strong { color: var(--warning); }

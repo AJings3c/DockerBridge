@@ -2,6 +2,7 @@
     margin-top: 14px;
     padding: 10px 12px;
     border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--ink-muted);
     border-radius: var(--radius-md);
     background: var(--bg-surface);
     color: var(--ink-secondary);
@@ -10,15 +11,17 @@
 }
 
 .error {
-    border-color: color-mix(in oklch, var(--danger), transparent 50%);
-    background: color-mix(in oklch, var(--danger), transparent 92%);
+    border-color: color-mix(in oklch, var(--danger), transparent 62%);
+    border-left-color: var(--danger);
+    background: color-mix(in oklch, var(--danger), transparent 93%);
     color: var(--danger);
 }
 
 .warning {
-    border-color: color-mix(in oklch, var(--warning), transparent 50%);
-    background: color-mix(in oklch, var(--warning), transparent 92%);
-    color: color-mix(in oklch, var(--warning), var(--ink) 12%);
+    border-color: color-mix(in oklch, var(--warning), transparent 62%);
+    border-left-color: var(--warning);
+    background: color-mix(in oklch, var(--warning), transparent 93%);
+    color: color-mix(in oklch, var(--warning), var(--ink) 20%);
 }
 
 @keyframes notice-in {

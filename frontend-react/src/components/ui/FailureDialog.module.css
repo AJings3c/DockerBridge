@@ -36,9 +36,10 @@
 
 .heading h2 {
     margin: 0;
+    font-family: var(--font-display);
     font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 650;
+    letter-spacing: 0.01em;
 }
 
 .heading p {

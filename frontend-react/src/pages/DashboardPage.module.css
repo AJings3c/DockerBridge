@@ -6,19 +6,29 @@
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     background: var(--bg-surface);
-    box-shadow: var(--shadow-surface), inset 0 1px 0 var(--highlight-edge);
+    box-shadow: var(--shadow-surface);
 }
 
+/* 签名:状态板顶缘的集装箱瓦楞纹(全站仅此一处与品牌块) */
 .statePane {
     position: relative;
     display: flex;
     min-width: 0;
     justify-content: space-between;
     flex-direction: column;
-    padding: 24px;
+    padding: 26px 24px 24px;
     border-right: 1px solid var(--border-subtle);
-    background: color-mix(in srgb, var(--bg-surface-raised), var(--accent) 1.5%);
+    background: color-mix(in srgb, var(--bg-surface-raised), var(--accent) 2%);
     color: var(--ink);
+}
+
+.statePane::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: var(--corrugation);
+    background-color: color-mix(in srgb, var(--accent), transparent 8%);
+    content: "";
 }
 
 .stateMeta {
@@ -26,13 +36,17 @@
     align-items: center;
     gap: 9px;
     color: var(--ink-muted);
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 .liveDot {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
+    border-radius: 2px;
     background: var(--success);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--success), transparent 86%);
 }
@@ -40,9 +54,10 @@
 .statePane h3 {
     max-width: 26ch;
     margin: 22px 64px 0 0;
+    font-family: var(--font-display);
     font-size: 28px;
     font-weight: 680;
-    letter-spacing: 0;
+    letter-spacing: 0.005em;
     line-height: 1.15;
     text-wrap: balance;
 }
@@ -78,6 +93,8 @@
 
 .stateActions a:hover {
     color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
 .stateActions a:active {
@@ -94,7 +111,7 @@
 
 .engineMark {
     position: absolute;
-    top: 20px;
+    top: 22px;
     right: 20px;
     display: grid;
     width: 44px;
@@ -102,9 +119,9 @@
     place-items: center;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    background: var(--material-control);
+    background: var(--bg-surface-raised);
     color: var(--accent-strong);
-    box-shadow: var(--shadow-control);
+    box-shadow: 0 1px 2px rgb(8 18 21 / 0.06);
 }
 
 .engineMark svg {
@@ -117,7 +134,7 @@
     min-width: 0;
     flex-direction: column;
     padding: 22px;
-    background: color-mix(in srgb, var(--bg-subtle), var(--bg-surface) 12%);
+    background: var(--bg-subtle);
 }
 
 .resourceHeader {
@@ -133,7 +150,11 @@
 }
 
 .resourceHeader span {
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 .resourceHeader strong {
@@ -171,7 +192,8 @@
 .resourceRow strong {
     font-family: var(--font-mono);
     font-size: 13px;
-    font-weight: 400;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .resourceFacts {
@@ -197,7 +219,11 @@
 .resourceFacts span {
     display: block;
     color: var(--ink-muted);
+    font-family: var(--font-mono);
     font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 .resourceFacts strong {
@@ -205,7 +231,8 @@
     margin-top: 4px;
     font-family: var(--font-mono);
     font-size: 17px;
-    font-weight: 400;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .resourceFacts small {

@@ -21,6 +21,7 @@
     transform: translateY(0);
 }
 
+/* 侧栏:深色钢板。浅色主题下也保持深色,是整站的视觉锚。 */
 .sidebar {
     position: fixed;
     z-index: var(--z-sticky);
@@ -28,21 +29,33 @@
     display: flex;
     width: var(--sidebar-width);
     flex-direction: column;
-    border-right: 1px solid var(--highlight-edge);
     background: var(--material-sidebar);
-    box-shadow: 1px 0 0 var(--border-subtle), 12px 0 36px rgb(0 0 0 / 0.025);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    backdrop-filter: blur(40px) saturate(180%);
+    box-shadow: 1px 0 0 var(--sidebar-border), 14px 0 40px rgb(8 18 21 / 0.16);
+    -webkit-backdrop-filter: blur(40px) saturate(140%);
+    backdrop-filter: blur(40px) saturate(140%);
+    color: var(--sidebar-ink);
 }
 
+/* 签名:品牌块顶部的一条集装箱瓦楞纹 */
 .brand {
     display: flex;
     min-height: var(--header-height);
     align-items: center;
     gap: 12px;
-    padding: 0 18px;
-    color: var(--ink);
+    padding: 0 16px 0 18px;
+    border-bottom: 1px solid var(--sidebar-border);
+    color: inherit;
     text-decoration: none;
+    position: relative;
+}
+
+.brand::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: var(--corrugation);
+    content: "";
+    opacity: 0.5;
 }
 
 .brandMark {
@@ -51,10 +64,10 @@
     height: 36px;
     flex: 0 0 auto;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--accent), white 22%);
+    border: 1px solid color-mix(in srgb, var(--accent), black 18%);
     border-radius: var(--radius-md);
     background: var(--accent);
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent), transparent 76%), inset 0 1px 0 rgb(255 255 255 / 0.32);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 4px 12px rgb(8 18 21 / 0.3);
 }
 
 .brand img {
@@ -71,14 +84,15 @@
 }
 
 .brand strong {
+    font-family: var(--font-display);
     font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 650;
+    letter-spacing: 0.01em;
 }
 
 .brand small,
 .connectionSummary small {
-    color: var(--ink-muted);
+    color: var(--sidebar-ink-muted);
     font-size: 11px;
 }
 
@@ -88,50 +102,67 @@
 
 .navGroup > p {
     margin: 0 10px 8px;
-    color: var(--ink-muted);
-    font-size: 11px;
-    font-weight: 600;
+    color: var(--sidebar-ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
 }
 
 .navigation {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
 }
 
 .navLink {
     position: relative;
     display: flex;
-    min-height: 44px;
+    min-height: 42px;
     align-items: center;
     gap: 10px;
-    padding: 6px 10px;
+    padding: 6px 10px 6px 14px;
     border-radius: var(--radius-md);
-    color: var(--ink-secondary);
+    color: var(--sidebar-ink-muted);
     text-decoration: none;
     isolation: isolate;
     transition: color var(--motion-fast) var(--ease-out), transform var(--motion-instant) var(--ease-out);
+}
+
+/* 铁路/泊位标记:激活项左缘的实色钢条 */
+.navLink::after {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: var(--berth-rail-width);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    content: "";
+    opacity: 0;
+    transform: scaleY(0.4);
+    transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-standard) var(--ease-out-expo);
 }
 
 .navLink::before {
     position: absolute;
     z-index: -1;
     inset: 0;
-    border: 1px solid transparent;
     border-radius: inherit;
     background: transparent;
     content: "";
     transform: scale(0.985);
-    transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-standard) var(--ease-out-expo);
+    transition: background var(--motion-fast) var(--ease-out), transform var(--motion-standard) var(--ease-out-expo);
 }
 
 .navLink:hover::before {
-    background: var(--material-hover);
+    background: var(--sidebar-hover);
     transform: scale(1);
 }
 
 .navLink:hover {
-    color: var(--ink);
+    color: var(--sidebar-ink);
 }
 
 .navLink:active {
@@ -144,20 +175,24 @@
     height: 28px;
     flex: 0 0 auto;
     place-items: center;
-    border-radius: 8px;
-    color: var(--ink-muted);
+    border-radius: var(--radius-sm);
+    color: var(--sidebar-ink-muted);
+    transition: color var(--motion-fast) var(--ease-out);
 }
 
 .navLink.active {
-    color: var(--ink);
+    color: var(--sidebar-ink);
     font-weight: 600;
 }
 
 .navLink.active::before {
-    border-color: color-mix(in srgb, var(--accent), transparent 86%);
-    background: var(--material-selection);
-    box-shadow: inset 0 1px 0 var(--highlight-edge), 0 1px 2px rgb(0 0 0 / 0.035);
+    background: var(--sidebar-selection);
     transform: scale(1);
+}
+
+.navLink.active::after {
+    opacity: 1;
+    transform: scaleY(1);
 }
 
 .navLink.active .navIcon {
@@ -170,8 +205,8 @@
     gap: 7px;
     padding: 12px;
     margin-top: auto;
-    border-top: 1px solid var(--border-subtle);
-    background: color-mix(in srgb, var(--material-sidebar), var(--bg-canvas) 16%);
+    border-top: 1px solid var(--sidebar-border);
+    background: rgb(8 18 21 / 0.28);
 }
 
 .connectionSummary {
@@ -181,7 +216,7 @@
     padding: 9px 8px;
     border-radius: var(--radius-md);
     border: 1px solid transparent;
-    background: color-mix(in srgb, var(--material-control), transparent 34%);
+    background: rgb(255 255 255 / 0.04);
     font-size: 12px;
 }
 
@@ -190,16 +225,23 @@
     width: 8px;
     height: 8px;
     flex: 0 0 auto;
-    border: 2px solid color-mix(in srgb, var(--success), var(--bg-surface) 55%);
     border-radius: 50%;
     background: var(--success);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success), transparent 88%);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success), transparent 86%);
 }
 
 .offlineDot {
-    border-color: color-mix(in srgb, var(--danger), transparent 60%);
     background: var(--danger);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger), transparent 88%);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger), transparent 86%);
+}
+
+.sidebarFooter :global(.button) {
+    color: var(--sidebar-ink-muted);
+}
+
+.sidebarFooter :global(.button):hover:not(:disabled) {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-ink);
 }
 
 .header {
@@ -212,11 +254,11 @@
     justify-content: space-between;
     gap: 24px;
     padding: 0 26px;
-    border-bottom: 1px solid var(--highlight-edge);
+    border-bottom: 1px solid var(--border-subtle);
     background: var(--material-chrome);
-    box-shadow: 0 1px 0 var(--border-subtle), 0 10px 26px rgb(0 0 0 / 0.025);
-    -webkit-backdrop-filter: blur(36px) saturate(180%);
-    backdrop-filter: blur(36px) saturate(180%);
+    box-shadow: 0 1px 0 var(--border-subtle);
+    -webkit-backdrop-filter: blur(36px) saturate(150%);
+    backdrop-filter: blur(36px) saturate(150%);
 }
 
 .pageContext {
@@ -225,9 +267,10 @@
 
 .pageContext h1 {
     margin: 0;
+    font-family: var(--font-display);
     font-size: 16px;
     font-weight: 600;
-    letter-spacing: 0;
+    letter-spacing: 0.005em;
 }
 
 .pageContext p {
@@ -247,22 +290,25 @@
 
 .connectionPill {
     display: inline-flex;
-    min-height: 34px;
+    min-height: 32px;
     align-items: center;
     gap: 8px;
     padding: 0 12px;
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-sm);
     background: var(--material-control);
-    box-shadow: var(--shadow-control);
     color: var(--ink-secondary);
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .connectionPill > span {
     width: 7px;
     height: 7px;
-    border-radius: 50%;
+    border-radius: 2px;
     background: var(--danger);
 }
 
@@ -272,15 +318,17 @@
 
 .rolePill {
     display: inline-flex;
-    min-height: 30px;
+    min-height: 28px;
     align-items: center;
     padding: 0 9px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-pill);
-    background: var(--material-control);
-    box-shadow: var(--shadow-control);
-    color: var(--ink-secondary);
+    border: 1px solid color-mix(in srgb, var(--accent), transparent 60%);
+    border-radius: var(--radius-xs);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-family: var(--font-mono);
     font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
 }
 
 .iconButton,
@@ -292,9 +340,8 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-subtle);
-    border-radius: 50%;
+    border-radius: var(--radius-md);
     background: var(--material-control);
-    box-shadow: var(--shadow-control);
     color: var(--ink-secondary);
     cursor: pointer;
     transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), transform var(--motion-instant) var(--ease-out);
@@ -320,13 +367,13 @@
     height: 36px;
     align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--accent), transparent 38%);
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent-strong);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--ink);
+    color: var(--bg-surface-raised);
+    font-family: var(--font-mono);
     font-size: 12px;
-    font-weight: 600;
-    box-shadow: inset 0 1px 0 var(--highlight-edge), 0 1px 3px rgb(0 0 0 / 0.08);
+    font-weight: 700;
 }
 
 .main {
@@ -359,8 +406,8 @@
     border-bottom: 1px solid color-mix(in srgb, var(--danger), transparent 58%);
     background: color-mix(in srgb, var(--danger), var(--material-chrome) 92%);
     color: color-mix(in srgb, var(--danger), var(--ink) 12%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
-    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+    backdrop-filter: blur(20px) saturate(120%);
     font-size: 12px;
 }
 
@@ -463,11 +510,11 @@
         min-height: 70px;
         grid-template-columns: repeat(4, 1fr);
         padding: 6px max(5px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(5px, env(safe-area-inset-left));
-        border-top: 1px solid var(--highlight-edge);
+        border-top: 1px solid var(--border-subtle);
         background: var(--material-chrome);
-        box-shadow: 0 -1px 0 var(--border-subtle), 0 -10px 30px rgb(0 0 0 / 0.04);
-        -webkit-backdrop-filter: blur(36px) saturate(180%);
-        backdrop-filter: blur(36px) saturate(180%);
+        box-shadow: 0 -1px 0 var(--border-subtle);
+        -webkit-backdrop-filter: blur(36px) saturate(150%);
+        backdrop-filter: blur(36px) saturate(150%);
     }
 
     .mobileNav a {
@@ -493,7 +540,6 @@
     .mobileNav a.mobileActive {
         background: var(--material-selection);
         color: var(--accent-strong);
-        box-shadow: inset 0 1px 0 var(--highlight-edge);
     }
 
     .sidebarTheme {
@@ -546,6 +592,6 @@
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .sidebar { background: var(--bg-surface); }
+    .sidebar { background: #131f22; }
     .header, .mobileNav { background: var(--bg-surface-raised); }
 }
