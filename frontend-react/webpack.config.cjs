@@ -85,10 +85,6 @@ module.exports = (_environment, argv) => {
             new CopyWebpackPlugin({
                 patterns: [
                     {
-                        from: path.resolve(__dirname, "../frontend/public"),
-                        to: path.resolve(__dirname, "../frontend-dist"),
-                    },
-                    {
                         from: path.resolve(__dirname, "public"),
                         to: path.resolve(__dirname, "../frontend-dist"),
                         noErrorOnMissing: true,

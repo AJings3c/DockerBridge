@@ -44,7 +44,6 @@ WORKDIR /app
 COPY --chown=node:node  ./package.json ./package.json
 COPY --chown=node:node  ./package-lock.json ./package-lock.json
 RUN npm ci
-COPY --chown=node:node ./frontend ./frontend
 COPY --chown=node:node ./frontend-react ./frontend-react
 RUN npm run build:frontend \
     && npm prune --omit=dev

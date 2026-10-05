@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./frontend/public/icon.svg" width="112" alt="DockerBridge" />
+  <img src="./frontend-react/public/icon.svg" width="112" alt="DockerBridge" />
   <h1>DockerBridge</h1>
   <p>面向自托管 Docker 与 Compose 环境的一体化管理平台</p>
 </div>
