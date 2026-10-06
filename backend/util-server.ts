@@ -89,7 +89,7 @@ export function permissionForAgentEvent(eventName : string) : UserPermission {
     if ([ "getStack", "getComposeEditor", "previewComposeEditorDraft", "saveComposeEditorDraft", "getComposeRevisions", "previewComposeRevision", "restoreComposeRevision", "deployStack", "saveStack", "deleteStack", "downStack", "previewDockerResourceRemoval", "removeDockerResource", "previewDockerNetworkDisconnect", "disconnectDockerNetwork", "createDockerNetwork", "createDockerVolume", "getAgentDiagnostics" ].includes(eventName)) {
         return "destructive";
     }
-    if ([ "terminalInput", "mainTerminal", "checkMainTerminal", "interactiveTerminal", "terminalJoin", "leaveCombinedTerminal", "closeMainTerminal", "terminalResize" ].includes(eventName)) {
+    if ([ "terminalInput", "mainTerminal", "checkMainTerminal", "interactiveTerminal", "terminalJoin", "leaveCombinedTerminal", "closeMainTerminal", "terminalResize", "containerExecTerminal" ].includes(eventName)) {
         return "terminal";
     }
     return "admin";

@@ -365,6 +365,56 @@ export class DockerBridgeSocketHandler extends SocketHandler {
             }
         });
 
+        socket.on("getDockerBridgeContainerInspect", async (containerId : unknown, callback) => {
+            try {
+                checkPermission(socket, "operate");
+
+                if (typeof containerId !== "string" || !containerId) {
+                    throw new ValidationError("Container ID must be a non-empty string");
+                }
+
+                const inspect = await this.inspectContainer(containerId);
+                callbackResult({
+                    ok: true,
+                    inspect,
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
+        socket.on("renameDockerBridgeContainer", async (payload : unknown, callback) => {
+            const startedAt = Date.now();
+            const containerNamePattern = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,126}$/;
+            let oldName = "";
+            try {
+                checkPermission(socket, "operate");
+
+                const data = (payload && typeof payload === "object" ? payload : {}) as { oldName? : unknown, newName? : unknown };
+                oldName = typeof data.oldName === "string" ? data.oldName : "";
+                const newName = typeof data.newName === "string" ? data.newName : "";
+                if (!containerNamePattern.test(oldName) || !containerNamePattern.test(newName)) {
+                    throw new ValidationError("Container name is invalid.");
+                }
+
+                const before = await this.inspectContainer(oldName);
+                await this.runDocker([ "rename", oldName, newName ]);
+                await this.writeOperationLog("rename", "container", oldName, before, {
+                    oldName,
+                    newName,
+                }, "success", undefined, socket, startedAt);
+                callbackResult({
+                    ok: true,
+                    msg: `Container renamed to ${newName}`,
+                }, callback);
+            } catch (e) {
+                if (oldName) {
+                    await this.writeOperationLog("rename", "container", oldName, null, { oldName }, "failed", e, socket, startedAt);
+                }
+                callbackError(e, callback);
+            }
+        });
+
         socket.on("previewDockerBridgeContainerCache", async (payloadOrId : unknown, callback) => {
             try {
                 checkPermission(socket, "destructive");

@@ -15,7 +15,7 @@ import dashboardStyles from "./DashboardPage.module.css";
 import styles from "./Page.module.css";
 
 export function DashboardPage() {
-    const { snapshot, loadingSnapshot, snapshotError, stacks, endpoints, stackSyncErrors, metricsHost } = useAppSelector(state => state.runtime);
+    const { snapshot, loadingSnapshot, snapshotError, stacks, endpoints, stackSyncErrors, metricsHost, events } = useAppSelector(state => state.runtime);
     const [ now, setNow ] = useState(Date.now());
 
     useEffect(() => {
@@ -120,6 +120,10 @@ export function DashboardPage() {
                     <div className={dashboardStyles.factItem}><span>Docker 根目录</span><strong className={dashboardStyles.factMono}>{snapshot?.summary.engine?.dockerRootDir || "—"}</strong></div>
                 </div>
                 {diskRows.length > 0 && <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>类型</th><th className={styles.mobileOptional}>数量 / 活跃</th><th>占用</th><th>可回收</th></tr></thead><tbody>{diskRows.map(row => <tr key={row.type}><td><div className={styles.primaryCell}><strong>{row.type}</strong><small>{row.active ? `活跃 ${row.active}` : ""}</small></div></td><td className={styles.mobileOptional}>{row.count}</td><td>{row.size}</td><td className={dashboardStyles.reclaimCell}>{row.reclaimable}</td></tr>)}</tbody></table></div>}
+            </Panel>
+            <Panel className={dashboardStyles.endpointPanel}>
+                <PanelHeader description="容器与镜像的实时事件流，来自 Docker 事件监听。" title="最近事件" />
+                {events.length === 0 ? <EmptyState title="暂无事件" description="容器启动、退出或镜像更新时会在这里实时出现。" /> : <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>动作</th><th>对象</th><th className={styles.mobileOptional}>类型</th><th className={styles.mobileOptional}>时间</th></tr></thead><tbody>{events.slice().reverse().slice(0, 10).map((record, index) => <tr key={`${record.t}-${index}`}><td><div className={styles.primaryCell}><strong>{record.action}</strong></div></td><td><div className={styles.primaryCell}><strong>{record.actorName}</strong><small>{record.image || ""}</small></div></td><td className={styles.mobileOptional}>{record.type === "container" ? "容器" : record.type === "image" ? "镜像" : record.type}</td><td className={styles.mobileOptional}>{new Date(record.t).toLocaleTimeString()}</td></tr>)}</tbody></table></div>}
             </Panel>
             <Panel className={dashboardStyles.endpointPanel}>
                 <PanelHeader description="本机与远程 Agent 的实时连接状态；离线节点保留最后一次同步数据但禁止操作。" title="运行节点" />

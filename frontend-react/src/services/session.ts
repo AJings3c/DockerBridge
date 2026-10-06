@@ -79,6 +79,16 @@ export function initializeSession() {
             }
         }).catch(() => {});
     });
+    realtime.on("dockerBridgeEvent", (payload : unknown) => {
+        const data = payload as Partial<DockerEventRecord> | null;
+        if (data && typeof data.action === "string" && typeof data.actorName === "string") {
+            store.dispatch(dockerEventReceived({ t: typeof data.t === "number" ? data.t : Date.now(),
+                type: typeof data.type === "string" ? data.type : "",
+                action: data.action,
+                actorName: data.actorName,
+                image: typeof data.image === "string" ? data.image : "" }));
+        }
+    });
     realtime.on("stackStatusList", (response : unknown) => {
         const data = response as { ok: boolean; stackStatusList: Record<string, number>; endpoint?: string };
         if (data.ok) {
