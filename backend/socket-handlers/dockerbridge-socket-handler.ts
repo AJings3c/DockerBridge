@@ -299,7 +299,6 @@ export class DockerBridgeSocketHandler extends SocketHandler {
             }
         });
 
-
         socket.on("dockerBridgeContainerAction", async (containerId : unknown, action : unknown, callback) => {
             const startedAt = Date.now();
             try {
@@ -307,7 +306,7 @@ export class DockerBridgeSocketHandler extends SocketHandler {
                     throw new ValidationError("Invalid container action request");
                 }
 
-                if (![ "start", "stop", "restart", "recreate" ].includes(action)) {
+                if (![ "start", "stop", "restart", "recreate", "pause", "unpause" ].includes(action)) {
                     throw new ValidationError("Unsupported container action");
                 }
                 checkPermission(socket, action === "recreate" ? "destructive" : "operate");
@@ -354,7 +353,8 @@ export class DockerBridgeSocketHandler extends SocketHandler {
                 }
 
                 const tail = this.validateLogTail(options);
-                const logs = await this.runDockerLogs(containerId, tail);
+                const since = this.validateLogSince(options);
+                const logs = await this.runDockerLogs(containerId, tail, since);
                 callbackResult({
                     ok: true,
                     logs,
@@ -2958,9 +2958,24 @@ export class DockerBridgeSocketHandler extends SocketHandler {
         });
     }
 
-    private runDockerLogs(containerId : string, tail : number) : Promise<string> {
+    private validateLogSince(options : unknown) : string {
+        const since = (options && typeof options === "object" ? (options as { since?: unknown }).since : "") || "";
+        if (typeof since !== "string" || since.length > 64) {
+            return "";
+        }
+        return since;
+    }
+
+    private runDockerLogs(containerId : string, tail : number, since = "") : Promise<string> {
+        const args = [ "logs" ];
+        if (since) {
+            args.push("--since", since);
+        } else {
+            args.push("--tail", String(tail));
+        }
+        args.push(containerId);
         return new Promise((resolve, reject) => {
-            const process = spawnProcess("docker", [ "logs", "--tail", String(tail), containerId ], {
+            const process = spawnProcess("docker", args, {
                 windowsHide: true,
             });
             const chunks : Buffer[] = [];

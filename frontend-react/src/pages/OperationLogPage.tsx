@@ -106,7 +106,6 @@ function resultStatus(result : string) {
     return "created";
 }
 
-
 function operationObjectTarget(item : OperationLogItem) {
     const params = new URLSearchParams();
     if (item.objectType === "container") {

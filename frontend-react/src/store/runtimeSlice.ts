@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ContainerMetricsSample, DockerSnapshot, EndpointConnectionStatus, EndpointSummary, HostMetricsSample, StackSummary } from "@/types/domain";
+import { ContainerMetricsSample, DockerEventRecord, DockerSnapshot, EndpointConnectionStatus, EndpointSummary, HostMetricsSample, StackSummary } from "@/types/domain";
 
 interface RuntimeState {
     stacks: Record<string, StackSummary>;
@@ -11,6 +11,7 @@ interface RuntimeState {
     snapshotError: string;
     metricsHost: HostMetricsSample[];
     metricsContainers: Record<string, ContainerMetricsSample[]>;
+    events: DockerEventRecord[];
 }
 
 const METRICS_CAP = 180;
@@ -63,6 +64,7 @@ const initialState : RuntimeState = {
     snapshotError: "",
     metricsHost: [],
     metricsContainers: {},
+    events: [],
 };
 
 const runtimeSlice = createSlice({
@@ -171,6 +173,15 @@ const runtimeSlice = createSlice({
                 state.metricsContainers[name] = series;
             }
         },
+        dockerEventReceived(state, action : PayloadAction<DockerEventRecord>) {
+            state.events.push(action.payload);
+            if (state.events.length > 50) {
+                state.events.splice(0, state.events.length - 50);
+            }
+        },
+        dockerEventsBufferReceived(state, action : PayloadAction<DockerEventRecord[]>) {
+            state.events = action.payload.slice(-50);
+        },
         runtimeCleared() {
             return initialState;
         },
@@ -185,6 +196,8 @@ export const {
     snapshotFailed,
     snapshotLoading,
     snapshotReceived,
+    dockerEventReceived,
+    dockerEventsBufferReceived,
     metricsHistoryReceived,
     metricsSampleReceived,
     stackListReceived,

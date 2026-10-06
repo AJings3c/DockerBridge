@@ -1,9 +1,8 @@
 import { store } from "@/store/store";
 import { snapshotFailed, snapshotLoading, snapshotReceived } from "@/store/runtimeSlice";
 import { repositoryFailed, repositoryLoading, repositoryReceived } from "@/store/repositorySlice";
-import { AgentDiagnosticsResponse, AgentManagementResponse, AgentRemovalPreviewResponse, AgentTestResponse, ApiResponse, CacheCleanupPreviewResponse, CacheCleanupResponse, ComposeEditorMutationResponse, ComposeEditorPreviewResponse, ComposeEditorResponse, ComposeRepositoryResponse, ComposeRevisionListResponse, ComposeServiceLogsResponse, ComposeStackDetailResponse, ContainerLogsResponse, DockerDaemonConfigForm, DockerDaemonConfigMutationResponse, DockerDaemonConfigPreviewResponse, DockerDaemonConfigResponse, DockerNetworkDisconnectPreviewResponse, DockerPortMutationResponse, DockerPortPreflightResponse, DockerPortRollback, DockerPortUpdatePayload, DockerResourceInventoryResponse, DockerResourceRemovalPreviewResponse, DockerSnapshot, ImagePrunePreviewResponse, ImagePruneResponse, ImagePullProgress, OperationLogExportResponse, OperationLogResponse, SystemBackupListResponse, SystemRestorePreviewResponse, SystemRestoreResponse, UserListResponse, UserRole } from "@/types/domain";
+import { AgentDiagnosticsResponse, AgentManagementResponse, AgentRemovalPreviewResponse, AgentTestResponse, ApiResponse, CacheCleanupPreviewResponse, CacheCleanupResponse, ComposeEditorMutationResponse, ComposeEditorPreviewResponse, ComposeEditorResponse, ComposeRepositoryResponse, ComposeRevisionListResponse, ComposeServiceLogsResponse, ComposeStackDetailResponse, ContainerInspectResponse, ContainerLogsResponse, DockerDaemonConfigForm, DockerDaemonConfigMutationResponse, DockerDaemonConfigPreviewResponse, DockerDaemonConfigResponse, DockerNetworkDisconnectPreviewResponse, DockerPortMutationResponse, DockerPortPreflightResponse, DockerPortRollback, DockerPortUpdatePayload, DockerResourceInventoryResponse, DockerResourceRemovalPreviewResponse, DockerSnapshot, ImagePrunePreviewResponse, ImagePruneResponse, ImagePullProgress, MetricsHistoryResponse, OperationLogExportResponse, OperationLogResponse, SystemBackupListResponse, SystemRestorePreviewResponse, SystemRestoreResponse, UserListResponse, UserRole } from "@/types/domain";
 import { emitAgentWithAck, emitWithAck, emitWithAckTimeout, realtime } from "./realtime/client";
-import { MetricsHistoryResponse } from "@/types/domain";
 
 export async function refreshSnapshot() {
     store.dispatch(snapshotLoading());
@@ -16,16 +15,26 @@ export async function refreshSnapshot() {
     return response;
 }
 
+export function renameContainer(oldName : string, newName : string) {
+    return emitWithAck<ApiResponse>("renameDockerBridgeContainer", { oldName,
+        newName });
+}
+
+export function fetchContainerInspect(containerId : string) {
+    return emitWithAck<ContainerInspectResponse>("getDockerBridgeContainerInspect", containerId);
+}
+
 export function fetchMetricsHistory() {
     return emitWithAck<MetricsHistoryResponse>("getDockerBridgeMetricsHistory");
 }
 
-export async function containerAction(containerId : string, action : "start" | "stop" | "restart" | "recreate") {
+export async function containerAction(containerId : string, action : "start" | "stop" | "restart" | "recreate" | "pause" | "unpause") {
     return emitWithAck<ApiResponse>("dockerBridgeContainerAction", containerId, action);
 }
 
-export function queryContainerLogs(containerId : string, tail = 300) {
-    return emitWithAck<ContainerLogsResponse>("getDockerBridgeContainerLogs", containerId, { tail });
+export function queryContainerLogs(containerId : string, tail = 300, since = "") {
+    return emitWithAck<ContainerLogsResponse>("getDockerBridgeContainerLogs", containerId, { tail,
+        since });
 }
 
 export function previewContainerCache(containerId : string) {

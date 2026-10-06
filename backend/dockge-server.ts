@@ -33,6 +33,7 @@ import User from "./models/user";
 import childProcessAsync from "promisify-child-process";
 import { AgentManager } from "./agent-manager";
 import { ContainerMetricsSample, HostMetricsSample, MetricsHistory } from "./metrics-history";
+import { DockerEventsWatcher } from "./docker-events-watcher";
 import { AgentProxySocketHandler } from "./socket-handlers/agent-proxy-socket-handler";
 import { AgentSocketHandler } from "./agent-socket-handler";
 import { AgentSocket } from "../common/agent-socket";
@@ -89,6 +90,8 @@ export class DockgeServer {
     stacksDir : string = "";
 
     metricsHistory = new MetricsHistory();
+
+    eventsWatcher = new DockerEventsWatcher();
 
     private engineInfoCache : { at : number; data : Record<string, unknown> } | null = null;
 
@@ -479,6 +482,8 @@ export class DockgeServer {
                 }
             });
 
+            this.eventsWatcher.start(this.io);
+
             checkVersion.startInterval();
         });
 
@@ -803,6 +808,7 @@ export class DockgeServer {
      * @param signal The signal that triggered this function to be called.
      */
     async shutdownFunction(signal : string | undefined) {
+        this.eventsWatcher.stop();
         log.info("server", "Shutdown requested");
         log.info("server", "Called signal: " + signal);
 

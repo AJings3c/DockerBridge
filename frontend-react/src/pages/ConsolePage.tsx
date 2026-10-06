@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
@@ -23,6 +24,8 @@ interface ConsolePolicy {
 }
 
 export function ConsolePage() {
+    const [ searchParams ] = useSearchParams();
+    const containerName = searchParams.get("container") || "";
     const host = useRef<HTMLDivElement>(null);
     const [ error, setError ] = useState("");
     const [ profile, setProfile ] = useState<ConsoleProfile>();
@@ -57,16 +60,24 @@ export function ConsolePage() {
                 setError(`终端已关闭（${reasonLabel}${typeof data === "number" ? `，退出码 ${data}` : ""}）。`);
             }
         });
-        void emitAgentWithAck<ApiResponse & { profile?: ConsoleProfile; policy?: ConsolePolicy }>("", "mainTerminal", terminalName)
+        const openPromise = containerName
+            ? emitAgentWithAck<ApiResponse>("", "containerExecTerminal", containerName, "sh")
+            : emitAgentWithAck<ApiResponse & { profile?: ConsoleProfile; policy?: ConsolePolicy }>("", "mainTerminal", terminalName);
+        void openPromise
             .then(response => {
                 if (!response.ok) {
-                    setError(response.msg === "Console is not enabled."
-                        ? "终端尚未启用。请设置 DOCKERBRIDGE_ENABLE_CONSOLE=true；宿主机终端还需额外配置 pid/privileged。"
-                        : response.msg || "无法启动终端，请检查 shell 与部署权限。 ");
+                    setError(containerName
+                        ? response.msg || "无法连接容器终端。"
+                        : response.msg === "Console is not enabled."
+                            ? "终端尚未启用。请设置 DOCKERBRIDGE_ENABLE_CONSOLE=true；宿主机终端还需额外配置 pid/privileged。"
+                            : response.msg || "无法启动终端，请检查 shell 与部署权限。 ");
                     return;
                 }
-                setProfile(response.profile);
-                setPolicy(response.policy);
+                const mainResponse = response as ApiResponse & { profile?: ConsoleProfile; policy?: ConsolePolicy };
+                if (!containerName && mainResponse.profile) {
+                    setProfile(mainResponse.profile);
+                    setPolicy(mainResponse.policy);
+                }
             })
             .catch(error => {
                 setError(error instanceof Error ? `终端连接失败：${error.message}` : "终端连接失败，请检查运行服务连接。 ");
@@ -91,9 +102,9 @@ export function ConsolePage() {
     return (
         <div className={styles.page}>
             <PageHeader
-                actions={profile && <StatusBadge label={`${profile.target === "host" ? "宿主机" : "运行环境"} · ${profile.label} · ${profile.shell}${profile.transport === "pipe" ? " · 兼容模式" : ""}`} status="online" />}
+                actions={<StatusBadge label={containerName ? `容器 exec · ${containerName} · sh` : profile ? `${profile.target === "host" ? "宿主机" : "运行环境"} · ${profile.label} · ${profile.shell}${profile.transport === "pipe" ? " · 兼容模式" : ""}` : "连接中"} status="online" />}
                 description="命令会在标注的目标系统中执行，请谨慎操作。"
-                title="主机终端"
+                title={containerName ? `容器终端 · ${containerName}` : "主机终端"}
             />
             {error && <Notice tone="error">{error}</Notice>}
             {policy && <Notice>会话空闲 {Math.max(1, Math.round(policy.idleTimeoutSeconds / 60))} 分钟后自动关闭，最多允许 {policy.maxSessions} 个并发终端。会话开关会进入审计，但命令和输出不会被记录。</Notice>}

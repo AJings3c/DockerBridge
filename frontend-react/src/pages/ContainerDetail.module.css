@@ -107,3 +107,13 @@
         grid-template-columns: 1fr;
     }
 }
+
+.renameRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.renameRow .portInput {
+    max-width: 220px;
+}

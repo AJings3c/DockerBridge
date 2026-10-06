@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/primitives/EmptyState";
 import { StatusBadge } from "@/components/primitives/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { FailureDialog, LineChart, Notice, PageHeader, Panel, SearchField, SegmentedControl, Toolbar, useModalDialog } from "@/components/ui";
-import { cleanContainerCache, containerAction, imageAction, onImagePullProgress, preflightHostPort, previewContainerCache, previewImagePrune, pruneImages, queryContainerLogs, refreshSnapshot, rollbackHostPort, tagImage, updateHostPort } from "@/services/runtime";
+import { cleanContainerCache, containerAction, fetchContainerInspect, imageAction, onImagePullProgress, preflightHostPort, previewContainerCache, previewImagePrune, pruneImages, queryContainerLogs, refreshSnapshot, renameContainer, rollbackHostPort, tagImage, updateHostPort } from "@/services/runtime";
 import { formatBytes, formatTime } from "@/services/format";
 import { useAppSelector } from "@/store/hooks";
 import { CacheCleanupPreviewResponse, DockerContainer, DockerPort, DockerPortPreflightResponse, DockerPortRollback, DockerPortUpdatePayload, ImagePrunePreviewResponse } from "@/types/domain";
@@ -42,10 +42,81 @@ interface PortFailure {
 function ContainerDetailDialog({ container, onClose, onUpdated } : { container: DockerContainer; onClose: () => void; onUpdated: () => Promise<unknown> }) {
     const permissions = useAppSelector(state => state.session.permissions);
     const navigate = useNavigate();
+    const canOperate = permissions.includes("operate");
     const canDestructive = permissions.includes("destructive");
+
+    const actOnContainer = async (containerId : string, name : string, action : "pause" | "unpause") => {
+        setLifecycleBusy(`${containerId}:${action}`);
+        try {
+            const response = await containerAction(containerId, action);
+            if (response.ok) {
+                setLifecycleFeedback(`${name} ${action === "pause" ? "已暂停" : "已恢复运行"}`);
+            } else {
+                setLifecycleFailure({ name,
+                    action,
+                    message: response.msg || "操作失败" });
+            }
+        } finally {
+            setLifecycleBusy("");
+            await onUpdated();
+        }
+    };
     const metricsSeries = useAppSelector(state => state.runtime.metricsContainers[container.name]);
+    const [ inspectText, setInspectText ] = useState("");
+    const [ inspectError, setInspectError ] = useState("");
+    const [ loadingInspect, setLoadingInspect ] = useState(false);
+    const [ renameValue, setRenameValue ] = useState("");
+    const [ lifecycleBusy, setLifecycleBusy ] = useState("");
+    const [ lifecycleFeedback, setLifecycleFeedback ] = useState("");
+    const [ lifecycleFailure, setLifecycleFailure ] = useState<ActionFailure>();
+    const [ renameBusy, setRenameBusy ] = useState(false);
+    const [ logSince, setLogSince ] = useState("");
+    const [ logFilter, setLogFilter ] = useState("");
+
+    const loadInspect = async () => {
+        setLoadingInspect(true);
+        setInspectError("");
+        const response = await fetchContainerInspect(container.id);
+        if (response.ok) {
+            setInspectText(JSON.stringify(response.inspect, null, 2));
+        } else {
+            setInspectError(response.msg || "无法读取容器 inspect 数据");
+        }
+        setLoadingInspect(false);
+    };
+
+    const doRename = async () => {
+        const nextName = renameValue.trim();
+        if (!nextName || nextName === container.name) {
+            return;
+        }
+        if (!window.confirm(`确认把容器 ${container.name} 重命名为 ${nextName}？运行中的容器不会被重启。`)) {
+            return;
+        }
+        setRenameBusy(true);
+        const response = await renameContainer(container.name, nextName);
+        setRenameBusy(false);
+        if (response.ok) {
+            await onUpdated();
+            onClose();
+        } else {
+            setLogError(response.msg || "重命名失败");
+        }
+    };
+
+    const downloadLogs = () => {
+        const blob = new Blob([ logs ], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${container.name}.log`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const pauseAction = container.dockerState === "paused" ? "unpause" : "pause";
     const dialogRef = useModalDialog();
-    const [ section, setSection ] = useState<"overview" | "metrics" | "logs" | "cache">("overview");
+    const [ section, setSection ] = useState<"overview" | "metrics" | "inspect" | "logs" | "cache">("overview");
     const [ tail, setTail ] = useState(300);
     const [ logs, setLogs ] = useState("");
     const [ loadingLogs, setLoadingLogs ] = useState(false);
@@ -86,7 +157,7 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
     const refreshLogs = async () => {
         setLoadingLogs(true);
         setLogError("");
-        const response = await queryContainerLogs(container.id, tail);
+        const response = await queryContainerLogs(container.id, tail, logSince);
         if (response.ok) {
             setLogs(response.logs || "");
         } else {
@@ -218,10 +289,24 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                 <div className={detailStyles.tabs}>
                     <Button aria-pressed={section === "overview"} size="compact" variant={section === "overview" ? "primary" : "ghost"} onClick={() => setSection("overview")}>运行详情</Button>
                     <Button aria-pressed={section === "metrics"} size="compact" variant={section === "metrics" ? "primary" : "ghost"} onClick={() => setSection("metrics")}>资源曲线</Button>
-                    <Button aria-pressed={section === "logs"} size="compact" variant={section === "logs" ? "primary" : "ghost"} onClick={() => setSection("logs")}>最近日志</Button>
+                    <Button aria-pressed={section === "inspect"} size="compact" variant={section === "inspect" ? "primary" : "ghost"} onClick={() => {
+                        setSection("inspect");
+                        if (!inspectText && !loadingInspect) {
+                            void loadInspect();
+                        }
+                    }}>Inspect</Button><Button aria-pressed={section === "logs"} size="compact" variant={section === "logs" ? "primary" : "ghost"} onClick={() => setSection("logs")}>最近日志</Button>
                     <Button aria-pressed={section === "cache"} disabled={!canDestructive} size="compact" title={!canDestructive ? "仅管理员可清理缓存" : undefined} variant={section === "cache" ? "primary" : "ghost"} onClick={() => setSection("cache")}>缓存清理 {container.cacheDirs.length > 0 ? container.cacheDirs.length : ""}</Button>
                 </div>
                 {section === "overview" ? <div className={detailStyles.body}>
+                    <div className={detailStyles.logToolbar}>
+                        <div className={detailStyles.renameRow}>
+                            <Button disabled={!canOperate || Boolean(lifecycleBusy)} loading={lifecycleBusy === `${container.id}:pause`} size="compact" onClick={() => void actOnContainer(container.id, container.name, pauseAction)}>{container.dockerState === "paused" ? "恢复运行" : "暂停"}</Button>
+                            <Button disabled={!canOperate} size="compact" variant="ghost" onClick={() => navigate(`/console?container=${encodeURIComponent(container.name)}`)}><Icon name="terminal" size={14} />进入终端</Button>
+                        </div>
+                        {lifecycleFeedback && <Notice className={detailStyles.inlineNotice}>{lifecycleFeedback}</Notice>}
+                        {lifecycleFailure && <Notice tone="error" className={detailStyles.inlineNotice}>{lifecycleFailure.message}</Notice>}
+                        {container.managedBy === "container" && <div className={detailStyles.renameRow}><input aria-label="新的容器名称" className={detailStyles.portInput} onChange={event => setRenameValue(event.target.value)} placeholder="新的容器名称" value={renameValue} /><Button disabled={!canOperate || renameBusy || !renameValue.trim() || renameValue.trim() === container.name} loading={renameBusy} size="compact" variant="ghost" onClick={() => void doRename()}>重命名</Button></div>}
+                    </div>
                     <dl className={detailStyles.facts}>
                         <div><dt>运行身份</dt><dd>{container.runAs}</dd></div><div><dt>工作目录</dt><dd>{container.workingDir}</dd></div><div><dt>重启策略</dt><dd>{container.restartPolicy}</dd></div><div><dt>网络模式</dt><dd>{container.networkMode}</dd></div>
                         <div><dt>健康状态</dt><dd>{container.health}</dd></div><div><dt>退出码</dt><dd>{container.exitCode ?? "—"}</dd></div><div><dt>创建时间</dt><dd>{formatTime(container.createdAt)}</dd></div><div><dt>启动时间</dt><dd>{formatTime(container.startedAt)}</dd></div>
@@ -245,15 +330,22 @@ function ContainerDetailDialog({ container, onClose, onUpdated } : { container: 
                     <section className={detailStyles.mounts}><h3>挂载</h3>{container.mounts.length === 0 ? <p className={detailStyles.emptyCopy}>没有挂载卷或目录。</p> : <table><thead><tr><th>类型</th><th>来源</th><th>容器路径</th><th>缓存声明</th></tr></thead><tbody>{container.mounts.map((mount, index) => <tr key={`${mount.destination}-${index}`}><td>{mount.type}</td><td title={mount.source}>{mount.type === "volume" && mount.name ? <Button size="compact" variant="ghost" onClick={() => navigate(`/resources?tab=volumes&resource=${encodeURIComponent(mount.name)}&endpoint=local`)}>{mount.name}</Button> : mount.name || mount.source || "—"}</td><td>{mount.destination}</td><td>{mount.cache ? <StatusBadge label="可清理缓存" status="created" /> : "—"}</td></tr>)}</tbody></table>}</section>
                 </div> : section === "metrics" ? <div className={detailStyles.body}>
                     {(metricsSeries?.length || 0) < 2 ? <EmptyState title="采样积累中" description="容器指标每 10 秒采样一次，打开本页稍等片刻即可看到最近 30 分钟的曲线。" /> : <div className={detailStyles.metricsGrid}>
-                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.cpuPercent }))} label="CPU" unit="%" maxY={100} warnAbove={85} height={90} />
-                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.memoryPercent }))} label="内存" unit="%" maxY={100} warnAbove={90} height={90} />
-                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.netRxBytesPerSec + item.netTxBytesPerSec }))} label="网络速率" unit="bytes/s" height={90} />
-                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t, value: item.blockReadBytesPerSec + item.blockWriteBytesPerSec }))} label="磁盘 I/O 速率" unit="bytes/s" height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t,
+                            value: item.cpuPercent }))} label="CPU" unit="%" maxY={100} warnAbove={85} height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t,
+                            value: item.memoryPercent }))} label="内存" unit="%" maxY={100} warnAbove={90} height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t,
+                            value: item.netRxBytesPerSec + item.netTxBytesPerSec }))} label="网络速率" unit="bytes/s" height={90} />
+                        <LineChart points={(metricsSeries || []).map(item => ({ t: item.t,
+                            value: item.blockReadBytesPerSec + item.blockWriteBytesPerSec }))} label="磁盘 I/O 速率" unit="bytes/s" height={90} />
                     </div>}
+                </div> : section === "inspect" ? <div className={detailStyles.logsBody}>
+                    {inspectError && <Notice tone="error">{inspectError}</Notice>}
+                    <pre className={detailStyles.logOutput}>{loadingInspect ? "正在读取 inspect…" : inspectText || "暂无数据。"}</pre>
                 </div> : section === "logs" ? <div className={detailStyles.logsBody}>
-                    <div className={detailStyles.logToolbar}><label>最近<select onChange={event => setTail(Number(event.target.value))} value={tail}><option value={100}>100 行</option><option value={300}>300 行</option><option value={1000}>1000 行</option><option value={5000}>5000 行</option></select></label><Button loading={loadingLogs} size="compact" onClick={() => void refreshLogs()}><Icon name="refresh" size={14} />刷新日志</Button></div>
+                    <div className={detailStyles.logToolbar}><label>范围<select onChange={event => setLogSince(event.target.value)} value={logSince}><option value="">按行数</option><option value="1h">最近 1 小时</option><option value="24h">最近 24 小时</option><option value="168h">最近 7 天</option></select></label>{logSince === "" && <label>行数<select onChange={event => setTail(Number(event.target.value))} value={tail}><option value={100}>100 行</option><option value={300}>300 行</option><option value={1000}>1000 行</option><option value={5000}>5000 行</option></select></label>}<input aria-label="过滤日志关键字" className={detailStyles.portInput} onChange={event => setLogFilter(event.target.value)} placeholder="过滤关键字" value={logFilter} /><Button loading={loadingLogs} size="compact" onClick={() => void refreshLogs()}><Icon name="refresh" size={14} />刷新</Button><Button disabled={!logs} size="compact" variant="ghost" onClick={downloadLogs}>下载</Button></div>
                     {logError && <Notice tone="error">{logError}</Notice>}
-                    <pre className={detailStyles.logOutput}>{loadingLogs && !logs ? "正在读取日志…" : logs || "当前没有日志输出。"}</pre>
+                    <pre className={detailStyles.logOutput}>{loadingLogs && !logs ? "正在读取日志…" : (logFilter ? logs.split("\n").filter(line => line.includes(logFilter)).join("\n") : logs) || "当前没有日志输出。"}</pre>
                 </div> : <div className={detailStyles.cacheBody}>
                     {container.cacheDirs.length === 0 ? <EmptyState description="只有通过 Compose x-dockerbridge.cacheDirs 或容器标签 dockerbridge.cacheDirs 显式声明的 bind mount 才能清理。" title="没有声明缓存目录" /> : <>
                         <div className={detailStyles.cacheToolbar}><div><strong>显式声明的缓存目录</strong><span>先解析 bind mount、检查路径边界并估算文件，再允许删除。</span></div><Button loading={cacheBusy === "preview"} onClick={() => void previewCache()}><Icon name="refresh" size={14} />生成预览</Button></div>
@@ -288,7 +380,39 @@ export function ContainersPage() {
     const [ feedback, setFeedback ] = useState("");
     const [ failure, setFailure ] = useState<ActionFailure>();
     const [ selectedContainerName, setSelectedContainerName ] = useState("");
+    const [ batchSelection, setBatchSelection ] = useState<Array<{ id: string; name: string; status: string }>>([]);
+    const [ batchBusy, setBatchBusy ] = useState(false);
+    const [ batchAction, setBatchAction ] = useState<"start" | "stop">("start");
     const [ deepLinkNotice, setDeepLinkNotice ] = useState<{ message: string; tone: "default" | "error" }>();
+
+    const runBatch = async (action : "start" | "stop") => {
+        if (batchSelection.length === 0) {
+            return;
+        }
+        if (!window.confirm(`确认批量${action === "start" ? "启动" : "停止"} ${batchSelection.length} 个容器？`)) {
+            return;
+        }
+        setBatchBusy(true);
+        setBatchAction(action);
+        let ok = 0;
+        let failed = 0;
+        for (const item of batchSelection) {
+            try {
+                const response = await containerAction(item.id, action);
+                if (response.ok) {
+                    ok++;
+                } else {
+                    failed++;
+                }
+            } catch {
+                failed++;
+            }
+        }
+        setBatchBusy(false);
+        setBatchSelection([]);
+        setFeedback(`批量操作完成：成功 ${ok} 个${failed ? `，失败 ${failed} 个` : ""}`);
+        await refreshSnapshot();
+    };
     const [ imageRef, setImageRef ] = useState("");
     const [ pullingImage, setPullingImage ] = useState("");
     const [ pullProgress, setPullProgress ] = useState<string[]>([]);
@@ -546,7 +670,14 @@ export function ContainersPage() {
             </Panel>}
             <Panel>
                 {tab === "containers" ? (
-                    containers.length === 0 ? <EmptyState title="没有匹配的容器" description={search ? "调整搜索条件，或清空搜索查看全部容器。" : "Docker 当前没有可管理的容器。"} /> : <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>容器</th><th>状态</th><th className={styles.mobileOptional}>资源</th><th className={styles.mobileOptional}>端口</th><th className={styles.mobileOptional}>项目</th><th aria-label="操作" /></tr></thead><tbody>{containers.map(container => <tr key={container.id}><td><div className={styles.primaryCell}><strong>{container.name}</strong><small>{container.image}</small></div></td><td><StatusBadge status={container.status} label={container.statusText || container.status} /></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span className={styles.mono}>CPU {container.cpuPercent || "—"}</span><small>{container.memoryUsage || "无采样"}</small></div></td><td className={`${styles.mono} ${styles.mobileOptional}`}>{container.ports.filter(port => port.published).map(port => port.hostPort).join(", ") || "—"}</td><td className={styles.mobileOptional}>{container.stack || "独立容器"}</td><td><div className={styles.rowActions}><Button size="compact" variant="ghost" onClick={() => setSelectedContainerName(container.name)}>详情</Button>{container.status === "running" ? <Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:stop`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "stop")} title={!canOperate ? "只读账户不能停止容器" : undefined}><Icon name="stop" size={14} />停止</Button> : <Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:start`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "start")} title={!canOperate ? "只读账户不能启动容器" : undefined}><Icon name="play" size={14} />启动</Button>}<Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:restart`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "restart")} title={!canOperate ? "只读账户不能重启容器" : undefined}><Icon name="restart" size={14} />重启</Button></div></td></tr>)}</tbody></table></div>
+                    <>
+                        {batchSelection.length > 0 && <div className={resourceStyles.batchBar}><span>已选 {batchSelection.length} 个</span><Button disabled={!canOperate || batchBusy} loading={batchBusy && batchAction === "start"} size="compact" onClick={() => void runBatch("start")}>批量启动</Button><Button disabled={!canOperate || batchBusy} loading={batchBusy && batchAction === "stop"} size="compact" variant="danger" onClick={() => void runBatch("stop")}>批量停止</Button><Button size="compact" variant="ghost" onClick={() => setBatchSelection([])}>取消选择</Button></div>}
+    containers.length === 0 ? <EmptyState title="没有匹配的容器" description={search ? "调整搜索条件，或清空搜索查看全部容器。" : "Docker 当前没有可管理的容器。"} /> : <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th className={styles.batchCol}><input aria-label="全选" checked={batchSelection.length > 0 && batchSelection.length === containers.length} onChange={event => setBatchSelection(event.target.checked ? containers.map(container => ({ id: container.id,
+                            name: container.name,
+                            status: container.status })) : [])} type="checkbox" /></th><th>容器</th><th>状态</th><th className={styles.mobileOptional}>资源</th><th className={styles.mobileOptional}>端口</th><th className={styles.mobileOptional}>项目</th><th aria-label="操作" /></tr></thead><tbody>{containers.map(container => <tr key={container.id}><td className={styles.batchCol}><input aria-label={`选择 ${container.name}`} checked={batchSelection.some(item => item.id === container.id)} onChange={event => setBatchSelection(event.target.checked ? [ ...batchSelection, { id: container.id,
+                            name: container.name,
+                            status: container.status }] : batchSelection.filter(item => item.id !== container.id))} type="checkbox" /></td><td><div className={styles.primaryCell}><strong>{container.name}</strong><small>{container.image}</small></div></td><td><StatusBadge status={container.status} label={container.statusText || container.status} /></td><td className={styles.mobileOptional}><div className={styles.primaryCell}><span className={styles.mono}>CPU {container.cpuPercent || "—"}</span><small>{container.memoryUsage || "无采样"}</small></div></td><td className={`${styles.mono} ${styles.mobileOptional}`}>{container.ports.filter(port => port.published).map(port => port.hostPort).join(", ") || "—"}</td><td className={styles.mobileOptional}>{container.stack || "独立容器"}</td><td><div className={styles.rowActions}><Button size="compact" variant="ghost" onClick={() => setSelectedContainerName(container.name)}>详情</Button>{container.status === "running" ? <Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:stop`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "stop")} title={!canOperate ? "只读账户不能停止容器" : undefined}><Icon name="stop" size={14} />停止</Button> : <Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:start`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "start")} title={!canOperate ? "只读账户不能启动容器" : undefined}><Icon name="play" size={14} />启动</Button>}<Button disabled={!canOperate || pending.startsWith(container.id)} loading={pending === `${container.id}:restart`} size="compact" onClick={() => void actOnContainer(container.id, container.name, "restart")} title={!canOperate ? "只读账户不能重启容器" : undefined}><Icon name="restart" size={14} />重启</Button></div></td></tr>)}</tbody></table></div>
+                    </>
                 ) : (
                     images.length === 0 ? <EmptyState title="没有匹配的镜像" description={search ? "调整搜索条件，或清空搜索查看全部镜像。" : "本机暂时没有镜像，可在上方输入镜像引用直接拉取。"} /> : <div className={styles.tableScroller}><table className={styles.table}><thead><tr><th>镜像</th><th>大小</th><th className={styles.mobileOptional}>端口</th><th className={styles.mobileOptional}>使用方</th><th className={styles.mobileOptional}>创建时间</th><th aria-label="操作" /></tr></thead><tbody>{images.map(image => {
                         const label = image.repoTags[0] || image.id;

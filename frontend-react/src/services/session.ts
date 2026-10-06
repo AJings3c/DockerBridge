@@ -8,8 +8,8 @@ import {
     sessionReady,
     setupRequired,
 } from "@/store/sessionSlice";
-import { endpointListReceived, endpointsDisconnected, endpointStatusReceived, metricsHistoryReceived, metricsSampleReceived, runtimeCleared, stackListReceived, stackStatusesReceived, stackSyncFailed } from "@/store/runtimeSlice";
-import { ApiResponse, ContainerMetricsSample, EndpointConnectionStatus, HostMetricsSample, MetricsHistoryResponse, StackSummary, UserPermission, UserRole } from "@/types/domain";
+import { dockerEventReceived, dockerEventsBufferReceived, endpointListReceived, endpointsDisconnected, endpointStatusReceived, metricsHistoryReceived, metricsSampleReceived, runtimeCleared, stackListReceived, stackStatusesReceived, stackSyncFailed } from "@/store/runtimeSlice";
+import { ApiResponse, ContainerMetricsSample, DockerEventRecord, EndpointConnectionStatus, HostMetricsSample, MetricsHistoryResponse, StackSummary, UserPermission, UserRole } from "@/types/domain";
 import { emitWithAck, realtime } from "./realtime/client";
 
 interface JwtPayload {

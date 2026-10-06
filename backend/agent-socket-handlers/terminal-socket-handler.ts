@@ -1,5 +1,5 @@
 import { DockgeServer } from "../dockge-server";
-import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationError } from "../util-server";
+import { callbackError, callbackResult, checkLogin, checkPermission, DockgeSocket, ValidationError } from "../util-server";
 import { log } from "../log";
 import { InteractiveTerminal, MainTerminal, Terminal } from "../terminal";
 import { Stack } from "../stack";
@@ -160,6 +160,38 @@ export class TerminalSocketHandler extends AgentSocketHandler {
                         idleTimeoutSeconds: terminal.idleTimeoutSeconds,
                         maxSessions: server.config.consoleMaxSessions || 3,
                     },
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
+        // Exec terminal for a standalone or compose container by name
+        agentSocket.on("containerExecTerminal", async (containerName : unknown, shell : unknown, callback) => {
+            try {
+                checkPermission(socket, "operate");
+
+                if (typeof(containerName) !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,126}$/.test(containerName)) {
+                    throw new ValidationError("Container name is invalid.");
+                }
+
+                if (typeof(shell) !== "string" || !/^[a-zA-Z0-9_/]{1,40}$/.test(shell)) {
+                    throw new ValidationError("Shell name is invalid.");
+                }
+
+                const terminalName = "container-exec-" + (socket.endpoint || "local") + "-" + containerName + "-" + shell;
+                let terminal = Terminal.getTerminal(terminalName);
+                if (!terminal) {
+                    terminal = new InteractiveTerminal(server, terminalName, "docker", [ "exec", "-it", containerName, shell ], server.stackDirFullPath);
+                    terminal.rows = 30;
+                }
+
+                terminal.join(socket);
+                terminal.start();
+
+                callbackResult({
+                    ok: true,
+                    terminalName,
                 }, callback);
             } catch (e) {
                 callbackError(e, callback);

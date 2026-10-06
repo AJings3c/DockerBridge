@@ -502,6 +502,20 @@ export interface DockerEngineInfo {
     dockerRootDir?: string;
 }
 
+export interface DockerEventRecord {
+    t: number;
+    type: string;
+    action: string;
+    actorName: string;
+    image: string;
+}
+
+export interface ContainerInspectResponse {
+    ok: boolean;
+    msg?: string;
+    inspect: unknown;
+}
+
 export interface MetricsHistoryResponse {
     ok: boolean;
     host: HostMetricsSample[];
